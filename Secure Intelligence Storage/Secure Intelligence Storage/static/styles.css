@@ -1,0 +1,119 @@
+.notification-container {
+    border: 1px solid #ccc; /* Add border around each notification content */
+    border-radius: 5px;
+    margin-bottom: 20px; /* Add space between notifications */
+}
+
+.notification-content {
+    padding: 20px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn {
+    padding: 8px 16px;
+    margin: 5px;
+    width: auto;
+    font-size: 14px;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 50px auto; /* Center the form horizontally */
+    width: 300px; /* Set a fixed width for the form */
+}
+
+h1 {
+    text-align: center;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="file"],
+input[type="submit"] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+input[type="submit"] {
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+a {
+    display: block;
+    margin-top: 10px;
+    color: #007bff;
+}
+
+a:hover {
+    text-decoration: none;
+    color: #0056b3;
+}
+
+.error-messages {
+    text-align: center;
+    color: red;
+    font-size: 14px; 
+     padding: 0;
+}
+
+.error-messages li {
+    list-style: none;
+}
+.success-message {
+    text-align: center;
+    color: green;
+    font-size: 14px; 
+     padding: 0;
+}
+
+.success-message li {
+    list-style: none;
+}
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh; /* This will make the container take the full height of the viewport */
+    padding: 10px; /* Padding around the buttons */
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px; /* Adjust padding as needed */
+    margin: 5px 0; /* Add margin between buttons */
+    width: 200px; /* Set width for each button */
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    box-sizing: border-box; /* Include padding and border in the width */
+}

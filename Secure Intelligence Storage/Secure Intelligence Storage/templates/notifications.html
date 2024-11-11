@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+</head>
+<body>
+    <h1>Notifications</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="error-messages">
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <li>{{ message }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    {% for notification in notifications %}
+        <div class="notification-container">
+            <div class="notification-content">
+                <p>Sender: {{ notification.sender }}</p>
+                <p>Recipient: {{ notification.recipient_username }}</p>
+                <p>File: {{ notification.filename }}</p>
+                <div class="button-container">
+                    <form action="{{ url_for('allow_access', notification_id=notification._id) }}" method="post">
+                        <input class="btn" type="submit" value="Allow">
+                    </form>
+                    <form action="{{ url_for('deny_access', notification_id=notification._id) }}" method="post">
+                        <input class="btn" type="submit" value="Deny">
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>

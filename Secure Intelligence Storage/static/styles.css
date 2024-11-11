@@ -1,0 +1,266 @@
+.notification-container {
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    margin-bottom: 20px; 
+}
+
+.notification-content {
+    padding: 20px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn {
+    padding: 8px 16px;
+    margin: 5px;
+    width: auto;
+    font-size: 14px;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #000000;
+    margin: 0;
+    padding: 0;
+}
+
+form {
+    color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 50px auto; 
+    width: 300px; 
+}
+
+h1 {
+    text-align: center;
+    color: #ffffff;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="file"],
+input[type="submit"] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+input[type="submit"] {
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+a {
+    display: block;
+    margin-top: 10px;
+    color: #007bff;
+}
+
+a:hover {
+    text-decoration: none;
+    color: #0056b3;
+}
+
+.error-messages {
+    text-align: center;
+    color: red;
+    font-size: 14px; 
+     padding: 0;
+}
+
+.error-messages li {
+    list-style: none;
+}
+.success-message {
+    text-align: center;
+    color: green;
+    font-size: 14px; 
+     padding: 0;
+}
+
+.success-message li {
+    list-style: none;
+}
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh; 
+    padding: 10px; 
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px; 
+    margin: 5px 0; 
+    width: 200px; 
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    box-sizing: border-box; 
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    flex-wrap: wrap; 
+}
+
+header h1 {
+    margin: 0;
+    font-size: 10px;
+}
+
+header h2 {
+    text-align: center; 
+}
+
+header a {
+    color: #fff; 
+    text-decoration: none;
+}
+
+header a:hover {
+    color: #ddd; 
+}
+
+.nav1 {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.nav1 .icon {
+    width: 30px;
+    height: 30px;
+}
+
+.nav2 {
+    display: flex;
+    justify-content: center; 
+    gap: 30px; 
+    padding: 10px 0;
+    width: 100%;
+    background-color: #444; 
+    margin-top: 10px; 
+}
+
+.nav2 a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 5px 10px;
+    transition: color 0.3s;
+}
+
+.nav2 a:hover {
+    color: #ddd; 
+}
+
+
+.dashboard-layout {
+    display: grid;
+    grid-template-areas:
+        "admin-tools user-activity"
+        "user-management user-activity";
+    grid-template-columns: 1fr 2fr; 
+    grid-template-rows: 1fr 1fr;
+    gap: 20px; 
+    padding: 20px;
+    height: calc(100vh - 120px); 
+}
+
+
+.admin-tools {
+    grid-area: admin-tools;
+    color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.admin-tools ul {
+    list-style: none;
+    padding: 0;
+}
+
+.admin-tools ul li {
+    margin: 10px 0;
+}
+
+.admin-tools ul li a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.admin-tools ul li a:hover {
+    text-decoration: underline;
+}
+
+
+.user-activity {
+    grid-area: user-activity;
+    color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    display: flex;
+    height: 100%; 
+}
+
+.insights-box {
+    min-height: 250px;
+    width: 100%;
+    color: #ffffff;
+    border-radius: 5px;
+}
+
+
+.user-management {
+    grid-area: user-management;
+    color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.user-management ul {
+    list-style: none;
+    padding: 0;
+}
+
+.user-management ul li {
+    margin: 10px 0;
+}
+
+.user-management ul li a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.user-management ul li a:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share File</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Secure Intelligence Storage</h1>
+        <h2>Share Files</h2>
+        <nav class="nav1">
+            <a href="{{ url_for('notifications') }}">
+                <img src="{{ url_for('static', filename='notification_icon.png') }}" alt="Notifications" class="icon">
+            </a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        
+        <nav class="nav2">
+        <a href="{{ url_for('upload_file') }}">Upload Files</a>
+        <a href="{{ url_for('files') }}">View Files</a>
+        <a href="{{ url_for('share') }}">Share Files</a>
+        <a href="{{ url_for('received_files') }}">Received Files</a>
+        </nav>
+    </header>
+
+    <form action="{{ url_for('share') }}" method="post">
+        <label for="recipient_email">Recipient Email:</label>
+        <input type="text" id="recipient_email" name="recipient_email" required>
+        <br>
+        <label for="file_password">Your File Password:</label>
+        <input type="password" id="file_password" name="file_password" required>
+        <br>
+        <label for="filename">Choose File:</label>
+        <select name="filename" id="filename">
+            {% for file in user_files %}
+                <option value="{{ file.filename }}">{{ file.filename }}</option>
+            {% endfor %}
+        </select>
+        <div class="error-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            {% if category == 'error' %}
+                                <li class="error-message">{{ message }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="success-message">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            {% if category == 'success' %}
+                                <li class="success-message">{{ message }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <br>
+        <input type="submit" value="Share">
+    </form>
+</body>
+</html>
