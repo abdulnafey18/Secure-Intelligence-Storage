@@ -179,7 +179,10 @@ header a:hover {
 .nav2 a:hover {
     color: #ddd; 
 }
-
+.notification-content {
+text-align: center;
+color: #fff;
+}
 
 .dashboard-layout {
     display: grid;
@@ -219,6 +222,74 @@ header a:hover {
 .admin-tools ul li a:hover {
     text-decoration: underline;
 }
+
+table {
+    width: 50%;
+    border-collapse: collapse;
+    color: white;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1.5%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+th {
+    color: #f2f2f2;
+    font-weight: bold;
+}
+
+tr:hover {
+    background-color: #444;
+}
+
+thead {
+    text-align: center;
+}
+
+nav, footer {
+    text-align: center;
+    margin: 20px 0;
+}
+
+nav a {
+    text-decoration: none;
+    color: white;
+    background-color: #555;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+nav a:hover {
+    background-color: #777;
+}
+
+button[type="submit"] {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: darkred;
+}
+
+span {
+    color: gray;
+    font-style: italic;
+    text-align: center;
+    display: block;
+}
+
 
 
 .user-activity {

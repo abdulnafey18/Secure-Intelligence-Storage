@@ -18,24 +18,46 @@
         </nav>
         
         <nav class="nav2">
+        <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
         <a href="{{ url_for('upload_file') }}">Upload Files</a>
         <a href="{{ url_for('files') }}">View Files</a>
         <a href="{{ url_for('share') }}">Share Files</a>
         <a href="{{ url_for('received_files') }}">Received Files</a>
         </nav>
     </header>
-    <ul>
-        {% for file in received_files %}
-            <li>
-                {% if file.status == 'pending' %}
-                    {{ file.sender }} shared <a href="{{ url_for('request_enter_file_password', shared_file_id=file._id) }}">{{ file.filename }}</a> - Status: {{ file.status }}
-                {% elif file.status == 'in_progress' %}
-                    {{ file.sender }} shared {{ file.filename }} - Request already sent
-                {% elif file.status == 'approved' %}
-                    {{ file.sender }} shared <a href="{{ url_for('download_file_with_status_check', filename=file.filename) }}">{{ file.filename }}</a> - Status: {{ file.status }}
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Shared By</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if files|length == 0 %}
+                <tr>
+                    <td colspan="4">No files found</td>
+                </tr>
+                {% else %}
+                {% for file in files %}
+                <tr>
+                    <td>{{ file['filename'] }}</td>
+                    <td>{{ file['sender'] }}</td>
+                    <td>{{ file['status'] }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_received_file', file_id=file['_id']) }}" method="post">
+                            <button type="submit">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
                 {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
+            </tbody>
+        </table>
+    </main>
 </body>
 </html>

@@ -2,17 +2,20 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 from database.mongo_db import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from security.encryption import encrypt_file, decrypt_file
+from security.encryptionDecryption import encrypt_file, decrypt_file
 from bson.objectid import ObjectId
 import os
 
 def file_routes(app):
     @app.route('/files')
     def files():
-        if 'email' not in session:
+        if 'email' in session:
+            user_email = session['email']
+            user_files = list(db.files.find({'email': user_email})) 
+            return render_template('files.html', files=user_files)
+        else:
+            flash('You need to log in to view your files.', 'error')
             return redirect(url_for('loginMenu'))
-        user_files = db.files.find({'email': session['email']})
-        return render_template('files.html', user_files=user_files)
 
     @app.route('/set_file_password', methods=['GET', 'POST'])
     def set_file_password():
@@ -190,11 +193,16 @@ def file_routes(app):
 
     @app.route('/received_files')
     def received_files():
-        if 'email' not in session:
+        if 'email' in session:
+            user_email = session['email']
+            
+            # Fetch files where the recipient matches the logged-in user
+            shared_files = list(db.shared_files.find({'recipient_email': user_email}))
+            
+            return render_template('received_files.html', files=shared_files)
+        else:
+            flash('You need to log in to view your received files.', 'error')
             return redirect(url_for('loginMenu'))
-
-        received_files = db.shared_files.find({'recipient_email': session['email']})
-        return render_template('received_files.html', received_files=received_files)
 
     @app.route('/share', methods=['GET', 'POST'])
     def share():
@@ -284,3 +292,36 @@ def file_routes(app):
         if 'email' not in session:
             return redirect(url_for('loginMenu'))
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    
+    @app.route('/delete_received_file/<file_id>', methods=['POST'])
+    def delete_received_file(file_id):
+        if 'email' in session:
+            user_email = session['email']
+            
+            # Ensure the file to be deleted was shared with the logged-in user
+            db.shared_files.delete_one({'_id': ObjectId(file_id), 'recipient_email': user_email})
+            
+            flash('Received file deleted successfully!', 'success')
+            return redirect(url_for('received_files'))
+        else:
+            flash('Unauthorized action!', 'error')
+            return redirect(url_for('loginMenu'))
+    
+    @app.route('/manage_files')
+    def manage_files():
+        if 'role' in session and session['role'] == 'admin':
+            files = list(db.files.find())
+            return render_template('encrypted_files.html', files=files)
+        else:
+            flash('Unauthorized action!', 'error')
+            return redirect(url_for('loginMenu'))
+        
+    @app.route('/delete_file/<file_id>', methods=['POST'])
+    def delete_file(file_id):
+        if 'email' in session:
+            db.uploads.delete_one({'_id': ObjectId(file_id), 'email': session['email']})  # Ensure ownership
+            flash('File deleted successfully!', 'success')
+            return redirect(url_for('files'))
+        else:
+            flash('Unauthorized action!', 'error')
+            return redirect(url_for('loginMenu'))

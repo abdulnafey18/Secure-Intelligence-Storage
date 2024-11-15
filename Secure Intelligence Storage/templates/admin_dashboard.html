@@ -39,16 +39,15 @@
 
             
             <section class="user-activity">
-                <h3>User Activity Insights</h3>
+                <h3>Security Analytics</h3>
             </section>
 
             
             <aside class="user-management">
-                <h3>User Management</h3>
+                <h3>User-File Management</h3>
                 <ul>
-                    <li><a href="#">All Users</a></li>
-                    <li><a href="#">Manage User Roles</a></li>
-                    <li><a href="#">Delete Users</a></li>
+                    <li><a href="{{ url_for('all_users') }}">Manage All Users</a></li>
+                    <li><a href="{{ url_for('manage_files') }}">Manage Encrypted Files</a></li>
                 </ul>
             </aside>
         </div>

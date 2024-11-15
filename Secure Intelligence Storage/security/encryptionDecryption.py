@@ -1,3 +1,5 @@
+# Reference for use of advanced encryption using CBC mode:
+# https://nitratine.net/blog/post/python-encryption-and-decryption-with-pycryptodome/?_gl=1*18sme64*_gcl_au*MTIwNDYzOTYzMS4xNzI5Mjg4Njgy*_ga*MTk3NDk1OTcyOC4xNzI5Mjg4Njgy*_ga_MBTGG7KX5Y*MTczMTY3OTIwNC40LjEuMTczMTY3OTMyMC4xMS4wLjIxMDE4NjU3Nw..#cbc-example 
 import os
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Encrypted Files</title>
+</head>
+<body>
+    <header>
+        <h1>Secure Intelligence Storage</h1>
+        <h2>All Encrypted Files</h2>
+        <nav class="nav1">
+            <a href="{{ url_for('notifications') }}">
+                <img src="{{ url_for('static', filename='notification_icon.png') }}" alt="Notifications" class="icon">
+            </a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        
+        <nav class="nav2">
+        <a href="{{ url_for('upload_file') }}">Upload Files</a>
+        <a href="{{ url_for('files') }}">View Files</a>
+        <a href="{{ url_for('share') }}">Share Files</a>
+        <a href="{{ url_for('received_files') }}">Received Files</a>
+        </nav>
+    </header>
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Uploaded By</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if files|length == 0 %}
+                <tr>
+                    <td colspan="3">No files found</td>
+                </tr>
+                {% else %}
+                {% for file in files %}
+                <tr>
+                    <td>{{ file['filename'] }}</td>
+                    <td>{{ file['email'] }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_file', file_id=file['_id']) }}" method="post">
+                            <button type="submit">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
