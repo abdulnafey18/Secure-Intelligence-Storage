@@ -11,9 +11,6 @@
     <h1>Secure Intelligence Storage</h1>
     <h2>My Files</h2>
     <nav class="nav1">
-        <a href="{{ url_for('notifications') }}">
-            <img src="{{ url_for('static', filename='notification_icon.png') }}" alt="Notifications" class="icon">
-        </a>
         <a href="{{ url_for('logout') }}">Logout</a>
     </nav>
     
@@ -26,34 +23,35 @@
     </nav>
 </header>
 <main>
-  <table>
-      <thead>
-          <tr>
-              <th>File Name</th>
-              <th>Action</th>
-          </tr>
-      </thead>
-      <tbody>
-          {% if files|length == 0 %}
-          <tr>
-              <td colspan="2">No files found</td>
-          </tr>
-          {% else %}
-          {% for file in files %}
-          <tr>
-              <td>{{ file['filename'] }}</td>
-              <td>
-                  <form action="{{ url_for('delete_file', file_id=file['_id']) }}" method="post">
-                      <button type="submit">
-                          Delete
-                      </button>
-                  </form>
-              </td>
-          </tr>
-          {% endfor %}
-          {% endif %}
-      </tbody>
-  </table>
+    <table>
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if files|length == 0 %}
+            <tr>
+                <td colspan="2">No files found</td>
+            </tr>
+            {% else %}
+            {% for file in files %}
+            <tr>
+                <td>{{ file['filename'] }}</td>
+                <td>
+                    <form action="{{ url_for('download_file', filename=file['filename']) }}" method="post">
+                        <button type="submit">Download</button>
+                    </form>
+                    <form action="{{ url_for('delete_file', filename=file['filename']) }}" method="post">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
 </main>
 </body>
 </html>

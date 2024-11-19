@@ -11,9 +11,6 @@
         <h1>Secure Intelligence Storage</h1>
         <h2>Received Files</h2>
         <nav class="nav1">
-            <a href="{{ url_for('notifications') }}">
-                <img src="{{ url_for('static', filename='notification_icon.png') }}" alt="Notifications" class="icon">
-            </a>
             <a href="{{ url_for('logout') }}">Logout</a>
         </nav>
         
@@ -31,26 +28,25 @@
                 <tr>
                     <th>File Name</th>
                     <th>Shared By</th>
-                    <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% if files|length == 0 %}
                 <tr>
-                    <td colspan="4">No files found</td>
+                    <td colspan="3">No files found</td>
                 </tr>
                 {% else %}
                 {% for file in files %}
                 <tr>
                     <td>{{ file['filename'] }}</td>
                     <td>{{ file['sender'] }}</td>
-                    <td>{{ file['status'] }}</td>
                     <td>
-                        <form action="{{ url_for('delete_received_file', file_id=file['_id']) }}" method="post">
-                            <button type="submit">
-                                Delete
-                            </button>
+                        <form action="{{ url_for('download_shared_file', shared_file_id=file['_id']) }}" method="post">
+                            <button type="submit">Download</button>
+                        </form>
+                        <form action="{{ url_for('delete_received_file', file_id=file['_id']) }}" method="post" style="display:inline;">
+                            <button type="submit">Delete</button>
                         </form>
                     </td>
                 </tr>

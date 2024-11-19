@@ -11,13 +11,11 @@
         <h1>Secure Intelligence Storage</h1>
         <h2>All Encrypted Files</h2>
         <nav class="nav1">
-            <a href="{{ url_for('notifications') }}">
-                <img src="{{ url_for('static', filename='notification_icon.png') }}" alt="Notifications" class="icon">
-            </a>
             <a href="{{ url_for('logout') }}">Logout</a>
         </nav>
         
         <nav class="nav2">
+        <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
         <a href="{{ url_for('upload_file') }}">Upload Files</a>
         <a href="{{ url_for('files') }}">View Files</a>
         <a href="{{ url_for('share') }}">Share Files</a>
@@ -29,25 +27,25 @@
             <thead>
                 <tr>
                     <th>File Name</th>
-                    <th>Uploaded By</th>
-                    <th>Action</th>
+                    <th>Size (Bytes)</th>
+                    <th>Last Modified</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% if files|length == 0 %}
+                {% if gcs_files|length == 0 %}
                 <tr>
-                    <td colspan="3">No files found</td>
+                    <td colspan="4">No files found</td>
                 </tr>
                 {% else %}
-                {% for file in files %}
+                {% for file in gcs_files %}
                 <tr>
-                    <td>{{ file['filename'] }}</td>
-                    <td>{{ file['email'] }}</td>
+                    <td>{{ file.filename }}</td>
+                    <td>{{ file.size }}</td>
+                    <td>{{ file.last_modified }}</td>
                     <td>
-                        <form action="{{ url_for('delete_file', file_id=file['_id']) }}" method="post">
-                            <button type="submit">
-                                Delete
-                            </button>
+                        <form action="{{ url_for('delete_file', filename=file.filename) }}" method="post" style="display:inline;">
+                            <button type="submit">Delete</button>
                         </form>
                     </td>
                 </tr>
