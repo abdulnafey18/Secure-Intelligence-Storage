@@ -23,16 +23,20 @@
     </nav>
 </header>
     <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+      <!-- Input field for selecting a file to upload -->
         <label for="file">Select File:</label>
         <input type="file" name="file" required><br>
+        <!-- Input field for entering the file password -->
         <label for="file_password">Enter File Password:</label>
         <input type="password" name="file_password" required><br>
+        <!-- Section to display error messages, if any -->
 <div class="error-messages">
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     <ul>
+      <!-- Loop through all flashed messages -->
       {% for message in messages %}
-        <li>{{ message }}</li>
+      <li>{{ message | e }}</li>
       {% endfor %}
     </ul>
   {% endif %}

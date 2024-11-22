@@ -14,17 +14,21 @@
                 <ul class="error-messages">
                     {% for category, message in messages %}
                         {% if category == 'error' %}
-                            <li>{{ message }}</li>
+                            <li>{{ message | e }}</li>
                         {% endif %}
                     {% endfor %}
                 </ul>
             {% endif %}
         {% endwith %}
-    <form action="{{ url_for('loginMenu') }}" method="post">
+        <!-- Login form -->
+    <form action="{{ url_for('login') }}" method="post">
+        <!-- Email input field -->
         <label for="email">Email:</label>
-        <input type="text" id="email" name="email" required><br>
+        <input type="email" id="email" name="email" required><br>
+        <!-- Password input field -->
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required><br>
+        <!-- OTP input field -->
         <label for="otp">OTP:</label>
         <input type="text" id="otp" name="otp" placeholder="Enter OTP"><br>
         <input type="submit" value="Login">

@@ -8,11 +8,15 @@
 </head>
 <body>
     <h1>Register</h1>
-    <form action="{{ url_for('registerMenu') }}" method="post">
+    <!-- Registration form -->
+    <form action="{{ url_for('register') }}" method="post">
+        <!-- Input field for the user's email -->
         <label for="email">Email:</label>
-        <input type="text" id="email" name="email" required><br>
+        <input type="email" id="email" name="email" required><br>
+        <!-- Input field for the user's password -->
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required><br>
+        <!-- Submit button to send the registration data -->
         <input type="submit" value="Register">
     </form>
 </body>

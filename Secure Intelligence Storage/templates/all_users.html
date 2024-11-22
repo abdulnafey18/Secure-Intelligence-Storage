@@ -32,18 +32,24 @@
                 </tr>
             </thead>
             <tbody>
+                <!-- Loop through the list of users dynamically -->
                 {% for user in users %}
                 <tr>
-                    <td>{{ user['email'] }}</td>
-                    <td>{{ user['role'] }}</td>
+                    <!-- Display the user's email -->
+                    <td>{{ user.email | e }}</td>
+                    <!-- Display the user's role -->
+                    <td>{{ user.role | e }}</td>
+                    <!-- Display the action buttons -->
                     <td>
-                        {% if user['role'] != 'admin' %}
-                        <form action="{{ url_for('delete_user', user_id=user['_id']) }}" method="post" style="display: inline;">
+                        {% if user.role != 'admin' %}
+                        <!-- If the user is not an admin, show a delete button -->
+                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" style="display: inline;">
                             <button type="submit">
                                 Delete
                             </button>
                         </form>
                         {% else %}
+                        <!-- If the user is an admin, display "Not allowed" -->
                         <span>Not allowed</span>
                         {% endif %}
                     </td>

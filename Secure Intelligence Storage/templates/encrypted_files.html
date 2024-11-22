@@ -33,17 +33,23 @@
                 </tr>
             </thead>
             <tbody>
+                <!-- Check if there are no files in the GCS bucket -->
                 {% if gcs_files|length == 0 %}
                 <tr>
                     <td colspan="4">No files found</td>
                 </tr>
                 {% else %}
+                <!-- Loop through each file in the GCS bucket -->
                 {% for file in gcs_files %}
                 <tr>
-                    <td>{{ file.filename }}</td>
-                    <td>{{ file.size }}</td>
-                    <td>{{ file.last_modified }}</td>
+                    <!-- Display the file name, ensuring it's HTML-escaped -->
+                    <td>{{ file['filename'] | e }}</td>
+                    <!-- Display the file size, ensuring it's HTML-escaped -->
+                    <td>{{ file['size'] | e }}</td>
+                    <!-- Display the last modified date of the file, ensuring it's HTML-escaped -->
+                    <td>{{ file['last_modified'] | e }}</td>
                     <td>
+                        <!-- Form to delete the file -->
                         <form action="{{ url_for('delete_file', filename=file.filename) }}" method="post" style="display:inline;">
                             <button type="submit">Delete</button>
                         </form>

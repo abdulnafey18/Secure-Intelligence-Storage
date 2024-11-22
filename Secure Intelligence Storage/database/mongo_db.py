@@ -1,26 +1,12 @@
-from pymongo import MongoClient
-import os
+from pymongo import MongoClient  # Import MongoDB client for interacting with MongoDB.
+import os  # Import the `os` module for handling file paths and environment variables.
 
-# MongoDB connection
+# Specify the database to be used in MongoDB, named 'secure_intelligence_storage'
 client = MongoClient('mongodb://localhost:27017/')
 db = client['secure_intelligence_storage']
 
+# Define the folder path where uploaded files will be stored
 uploads_folder = os.path.join('Secure Intelligence Storage', 'uploads')
 
-# Iterate through files in uploads folder
-for filename in os.listdir(uploads_folder):
-    # Find the user associated with this file (assuming you have filename mapping)
-    user_record = db.users.find_one({'email': {'$exists': True}})  # Fetch user email from users collection
-    
-    # Extract email if found
-    email = user_record['email'] if user_record else 'unknown'
-
-    # Insert the file record if it does not exist in the uploads collection
-    if not db.files.find_one({'filename': filename}):
-        db.files.insert_one({
-            'filename': filename,
-            'email': email
-        })
-
-access_requests = db['access_requests']
+# 'shared_files' to store information about files shared between users
 shared_files = db['shared_files']

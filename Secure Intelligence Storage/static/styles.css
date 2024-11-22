@@ -41,6 +41,7 @@ h1 {
     color: #ffffff;
 }
 
+input[type="email"],
 input[type="text"],
 input[type="password"],
 input[type="file"],
@@ -293,8 +294,6 @@ span {
     text-align: center;
     display: block;
 }
-
-
 
 .user-activity {
     grid-area: user-activity;

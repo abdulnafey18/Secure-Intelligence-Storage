@@ -15,34 +15,40 @@
         </nav>
         
         <nav class="nav2">
-        <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
-        <a href="{{ url_for('upload_file') }}">Upload Files</a>
-        <a href="{{ url_for('files') }}">View Files</a>
-        <a href="{{ url_for('share') }}">Share Files</a>
-        <a href="{{ url_for('received_files') }}">Received Files</a>
+            <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
+            <a href="{{ url_for('upload_file') }}">Upload Files</a>
+            <a href="{{ url_for('files') }}">View Files</a>
+            <a href="{{ url_for('share') }}">Share Files</a>
+            <a href="{{ url_for('received_files') }}">Received Files</a>
         </nav>
     </header>
 
     <form action="{{ url_for('share') }}" method="post">
+        <!-- Input field for entering the recipient's email -->
         <label for="recipient_email">Recipient Email:</label>
-        <input type="text" id="recipient_email" name="recipient_email" required>
+        <input type="email" id="recipient_email" name="recipient_email" required>
         <br>
+        <!-- Input field for entering the sender's file password -->
         <label for="file_password">Your File Password:</label>
         <input type="password" id="file_password" name="file_password" required>
         <br>
+        <!-- Dropdown menu to select a file to share -->
         <label for="filename">Choose File:</label>
         <select name="filename" id="filename">
+            <!-- Loop through the user's files to populate the dropdown options -->
             {% for file in user_files %}
-                <option value="{{ file.filename }}">{{ file.filename }}</option>
+                <option value="{{ file.filename | e }}">{{ file.filename | e }}</option>
             {% endfor %}
         </select>
+
+        <!-- Error Messages -->
         <div class="error-messages">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <ul>
                         {% for category, message in messages %}
                             {% if category == 'error' %}
-                                <li class="error-message">{{ message }}</li>
+                                <li class="error-message">{{ message | e }}</li>
                             {% endif %}
                         {% endfor %}
                     </ul>
@@ -50,13 +56,14 @@
             {% endwith %}
         </div>
 
+        <!-- Success Messages -->
         <div class="success-message">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <ul>
                         {% for category, message in messages %}
                             {% if category == 'success' %}
-                                <li class="success-message">{{ message }}</li>
+                                <li class="success-message">{{ message | e }}</li>
                             {% endif %}
                         {% endfor %}
                     </ul>
@@ -65,6 +72,7 @@
         </div>
 
         <br>
+        <!-- Submit button to share the selected file -->
         <input type="submit" value="Share">
     </form>
 </body>

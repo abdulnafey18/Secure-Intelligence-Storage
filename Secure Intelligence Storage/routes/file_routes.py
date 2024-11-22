@@ -1,57 +1,61 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, flash, abort, send_file
-from database.mongo_db import db
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-from bson.objectid import ObjectId
-from google.cloud import storage
-from datetime import datetime
-from gcs_client import get_gcs_client, GCS_BUCKET_NAME
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
-import hashlib
-from io import BytesIO
-import os, io
+from database.mongo_db import db # MongoDB database instance for storing metadata and shared files
+from werkzeug.security import generate_password_hash, check_password_hash # Password hashing and verification
+from werkzeug.utils import secure_filename # For securing uploaded filenames
+from bson.objectid import ObjectId # To work with MongoDB ObjectIds
+from google.cloud import storage # To interact with Google Cloud Storage
+from datetime import datetime # For timestamping file uploads and shared files
+from gcs_client import get_gcs_client, GCS_BUCKET_NAME # Utility functions and constants for Google Cloud Storage integration
+from Crypto.Cipher import AES # For AES encryption and decryption
+from Crypto.Util.Padding import pad, unpad # For padding/unpadding data for AES encryption
+import hashlib # To generate secure keys using SHA-256
+from io import BytesIO # For working with file-like objects in memory
+import os, io  # Standard Python modules for file and path handling
 
 def file_routes(app):
+    # Route for listing files belonging to the logged-in user
     @app.route('/files', methods=['GET'], endpoint='files')
     def list_files():
         if 'email' not in session:
             flash('You need to log in to view your files.', 'error')
-            return redirect(url_for('loginMenu'))
+            return redirect(url_for('login'))
 
         user_email = session['email']
-        # Convert the cursor to a list
+        # Fetch all files belonging to the user from the MongoDB files collection
         user_files = list(db.files.find({'email': user_email}))
 
-        # Exclude hidden system files like .DS_Store
+        
         visible_files = [file for file in user_files if not file['filename'].startswith('.')]
 
         return render_template('files.html', files=visible_files)
-
+    # Route for setting a file password (additional security for file encryption)
     @app.route('/set_file_password', methods=['GET', 'POST'])
     def set_file_password():
         if 'email' not in session:
-            return redirect(url_for('loginMenu'))
-
+            return redirect(url_for('login'))
+        # Handle POST request to set the file password
         if request.method == 'POST':
             file_password = request.form['file_password']
-            hashed_file_password = generate_password_hash(file_password)
+            hashed_file_password = generate_password_hash(file_password) # Hash the password for secure storage
             db.users.update_one({'email': session['email']}, {'$set': {'file_password': hashed_file_password}})
+            flash('Passwords set successfully!', 'success')
             return redirect(url_for('userDashboard'))
         return render_template('set_file_password.html')
-
+    # Route for uploading a file
     @app.route('/upload', methods=['GET', 'POST'])
     def upload_file():
         if 'email' not in session:
-            return redirect(url_for('loginMenu'))
-
+            return redirect(url_for('login'))
+        
         if request.method == 'POST':
+            # Retrieve the user's information from the database
             user = db.users.find_one({'email': session['email']})
             if not user:
                 flash('User not found. Please log in again.', 'error')
-                return redirect(url_for('loginMenu'))
-
+                return redirect(url_for('login'))
+            # Retrieve the file password entered by the user
             file_password = request.form.get('file_password')
+            # Verify the file password if it's set
             if 'file_password' in user:
                 if not check_password_hash(user['file_password'], file_password):
                     flash('Invalid file password.', 'error')
@@ -59,25 +63,26 @@ def file_routes(app):
             else:
                 flash('File password not set. Please set it first.', 'error')
                 return redirect(url_for('set_file_password'))
-
+            # Retrieve the uploaded file
             file = request.files['file']
             if file:
+                # Generate a secure filename using the user's email and the original filename
                 user_email = session['email']
                 filename = secure_filename(f"{user_email}_{file.filename}")
 
-                # Encrypt file in-memory
+                # Read the file data and encrypt it using AES
                 file_data = file.read()
                 key = hashlib.sha256(file_password.encode()).digest()
                 cipher = AES.new(key, AES.MODE_CBC)
                 encrypted_data = cipher.iv + cipher.encrypt(pad(file_data, AES.block_size))
 
-                # Upload encrypted data to GCS
+                # Upload the encrypted file to Google Cloud Storage
                 client = storage.Client()
                 bucket = client.bucket(GCS_BUCKET_NAME)
                 blob = bucket.blob(filename + ".enc")
                 blob.upload_from_file(BytesIO(encrypted_data))
 
-                # Save metadata in MongoDB
+                 # Insert file metadata into the MongoDB 'files' collection
                 db.files.insert_one({
                     'email': user_email,
                     'filename': filename + ".enc",
@@ -88,21 +93,21 @@ def file_routes(app):
                 return redirect(url_for('files'))
 
         return render_template('upload.html')
-
+    # Route for downloading and decrypting a file
     @app.route('/download/<filename>', methods=['GET', 'POST'])
     def download_file(filename):
         if 'email' not in session:
             flash('You need to log in first.', 'error')
-            return redirect(url_for('loginMenu'))
-
+            return redirect(url_for('login'))
+        # Retrieve the user's information from the database
         user = db.users.find_one({'email': session['email']})
         if not user or 'file_password' not in user:
             flash('File password not set. Please set your file password first.', 'error')
             return redirect(url_for('set_file_password'))
-
+        # Handle GET request to display the password input form
         if request.method == 'GET':
             return render_template('enter_file_password.html', filename=filename)
-
+        # Handle POST request to download the file
         file_password = request.form.get('file_password')
         if not file_password:
             flash('File password is required.', 'error')
@@ -113,87 +118,89 @@ def file_routes(app):
             return redirect(url_for('download_file', filename=filename))
 
         try:
-            # Download encrypted file from GCS
+            # Download the encrypted file from Google Cloud Storage
             client = storage.Client()
             bucket = client.bucket(GCS_BUCKET_NAME)
             blob = bucket.blob(filename)
             encrypted_data = blob.download_as_bytes()
 
-            # Decrypt the file
+            # Decrypt the file data using AES
             key = hashlib.sha256(file_password.encode()).digest()
-            iv = encrypted_data[:16]
-            cipher = AES.new(key, AES.MODE_CBC, iv)
+            iv = encrypted_data[:16] # Extract the initialization vector (IV)
+            cipher = AES.new(key, AES.MODE_CBC, iv) 
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
 
-            # Serve the decrypted file
+            # Send the decrypted file to the user for download
             return send_file(
                 io.BytesIO(decrypted_data),
                 mimetype='application/octet-stream',
                 as_attachment=True,
-                download_name=filename.replace('.enc', '')  # Original filename without .enc
+                download_name=filename.replace('.enc', '')  
             )
         except Exception as e:
             flash(f'Failed to download or decrypt the file: {str(e)}', 'error')
             return redirect(url_for('files'))
-
+    # Route for viewing a decrypted file's content
     @app.route('/view_decrypted_file/<filename>/<share_id>', methods=['POST'])
     def view_decrypted_file(filename, share_id):
         if 'email' not in session:
-            return redirect(url_for('loginMenu'))
-        
+            return redirect(url_for('login'))
+        # Retrieve the file password entered by the user
         file_password = request.form.get('file_password')
+        # Find the user's data in the database
         user = db.users.find_one({'email': session['email']})
         
         if 'file_password' in user:
             if check_password_hash(user['file_password'], file_password):
-                # Decrypt the file using the user's file password
+                # Construct the file path in the local upload folder
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                # Attempt to decrypt and retrieve the content
                 decrypted_content = decrypt_and_get_content(file_path, file_password)
-                
+                # If decryption succeeds, render the content for the user
                 if decrypted_content:
-                    # Render a template to display the decrypted file content
+                    
                     return render_template('view_decrypted_content.html', content=decrypted_content, filename=filename, file_password=file_password, share_id=share_id)
                 else:
-                    # If decryption failed, inform the user
+                    
                     flash('Failed to decrypt the file. Please try again.', 'error')
                     return redirect(url_for('download_file', filename=filename))
             else:
-                # If the provided file password is incorrect, inform the user and redirect back
+                
                 flash('Incorrect file password. Please try again.', 'error')
                 return redirect(url_for('download_file', filename=filename))
         else:
             return "File password not set. Please set your file password first."
-
+    # Route for listing files shared with the logged-in user
     @app.route('/received_files')
     def received_files():
         if 'email' not in session:
             flash('You need to log in to view your received files.', 'error')
-            return redirect(url_for('loginMenu'))
-
+            return redirect(url_for('login'))
+        # Get the logged-in user's email
         user_email = session['email']
         
-        # Fetch all files shared with the current user
+        # Fetch all files shared with the user from the shared_files collection
         shared_files = list(db.shared_files.find({'recipient_email': user_email}))
 
         return render_template('received_files.html', files=shared_files)
-
+    # Route for sharing a file with another user
     @app.route('/share', methods=['GET', 'POST'])
     def share():
         if 'email' not in session:
-            return redirect(url_for('loginMenu'))
-
+            return redirect(url_for('login'))
+        # Fetch all files belonging to the logged-in user
         user_files = list(db.files.find({'email': session['email']}))
-
+        # Handle file sharing on POST request
         if request.method == 'POST':
             recipient_email = request.form.get('recipient_email')
             filename = request.form.get('filename')
-
+            # Verify if the recipient exists in the database
             recipient = db.users.find_one({'email': recipient_email})
             if not recipient:
                 flash('Recipient not registered.', 'error')
                 return render_template('share.html', user_files=user_files)
 
-            # Insert shared file entry into DB
+            # Insert a new record into the shared_files collection
             db.shared_files.insert_one({
                 'sender': session['email'],
                 'recipient_email': recipient_email,
@@ -205,67 +212,67 @@ def file_routes(app):
             return redirect(url_for('files'))
 
         return render_template('share.html', user_files=user_files)
-
+    # Route for serving a file directly from the upload folder
     @app.route('/get_file/<filename>')
     def get_file(filename):
         if 'email' not in session:
-            return redirect(url_for('loginMenu'))
+            return redirect(url_for('login'))
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-    
+    # Route for downloading and decrypting a shared file
     @app.route('/download_shared_file/<shared_file_id>', methods=['GET', 'POST'])
     def download_shared_file(shared_file_id):
         if 'email' not in session:
             flash('You need to log in first.', 'error')
-            return redirect(url_for('loginMenu'))
-
+            return redirect(url_for('login'))
+        # Fetch the shared file details from the shared_files collection
         shared_file = db.shared_files.find_one({'_id': ObjectId(shared_file_id)})
         if not shared_file:
             flash('Shared file not found.', 'error')
             return redirect(url_for('received_files'))
-
+        # Get the filename and sender/recipient details
         filename = shared_file['filename']
         sender_email = shared_file['sender']
         recipient_email = session['email']
-
+        # Fetch sender and recipient details from the users collection
         sender = db.users.find_one({'email': sender_email})
         recipient = db.users.find_one({'email': recipient_email})
-
+        # Handle GET request to display the password input form
         if request.method == 'GET':
             return render_template('receivers_enter_file_password.html', filename=filename, shared_file_id=shared_file_id)
-
+        # Retrieve the file password from the form
         file_password = request.form.get('file_password')
         if not file_password:
             flash('File password is required.', 'error')
             return redirect(url_for('download_shared_file', shared_file_id=shared_file_id))
 
-        # Validate sender's file password for decryption
+        # Verify the sender's file password
         if not sender or not check_password_hash(sender.get('file_password', ''), file_password):
             flash('Incorrect file password.', 'error')
             return redirect(url_for('download_shared_file', shared_file_id=shared_file_id))
 
         try:
-            # Download encrypted file from GCS
+            # Download the encrypted file from Google Cloud Storage
             client = get_gcs_client()
             bucket = client.bucket(GCS_BUCKET_NAME)
             blob = bucket.blob(filename)
             encrypted_data = blob.download_as_bytes()
 
-            # Ensure valid encrypted file length
+            # Ensure the encrypted data is valid
             if len(encrypted_data) < 16:
                 raise ValueError("File data too short for valid IV and content.")
 
-            # Decrypt with sender's password
+            # Decrypt the file using AES
             sender_key = hashlib.sha256(file_password.encode()).digest()
             iv = encrypted_data[:16]
             cipher = AES.new(sender_key, AES.MODE_CBC, iv)
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
 
-            # Serve decrypted file
+            # Send the decrypted file to the recipient
             return send_file(
                 io.BytesIO(decrypted_data),
                 mimetype='application/octet-stream',
                 as_attachment=True,
-                download_name=filename.replace('.enc', '')  # Restore original filename
+                download_name=filename.replace('.enc', '')  
             )
 
         except ValueError as ve:
@@ -274,31 +281,31 @@ def file_routes(app):
             flash(f"Failed to download or decrypt the file: {str(e)}", 'error')
 
         return redirect(url_for('received_files'))
-    
+    # Route for deleting a received shared file
     @app.route('/delete_received_file/<file_id>', methods=['POST'])
     def delete_received_file(file_id):
         if 'email' in session:
             user_email = session['email']
             
-            # Ensure the file to be deleted was shared with the logged-in user
+            
             db.shared_files.delete_one({'_id': ObjectId(file_id), 'recipient_email': user_email})
             
             flash('Received file deleted successfully!', 'success')
             return redirect(url_for('received_files'))
         else:
             flash('Unauthorized action!', 'error')
-            return redirect(url_for('loginMenu'))
-    
+            return redirect(url_for('login'))
+    # Admin route for managing files in the system
     @app.route('/manage_files')
     def manage_files():
         if 'role' in session and session['role'] == 'admin':
-            # Fetch files from GCS bucket
+            
             client = get_gcs_client()
             bucket = client.bucket(GCS_BUCKET_NAME)
+            # List all blobs (files) in the bucket
+            blobs = bucket.list_blobs()  
             
-            blobs = bucket.list_blobs()  # List all files in the bucket
-            
-            # Show all files, including encrypted and non-encrypted versions
+            # Collect metadata about each file in the bucket
             gcs_files = []
             for blob in blobs:
                 gcs_files.append({
@@ -307,9 +314,9 @@ def file_routes(app):
                     'last_modified': blob.updated,
                 })
             
-            # Fetch encrypted file metadata from MongoDB for comparison
+            # Fetch all files metadata from MongoDB
             db_files = list(db.files.find())
-
+            # Render the 'encrypted_files.html' template with GCS and database files
             return render_template(
                 'encrypted_files.html',
                 gcs_files=gcs_files,
@@ -317,24 +324,29 @@ def file_routes(app):
             )
         else:
             flash('Unauthorized action!', 'error')
-            return redirect(url_for('loginMenu'))
-        
+            return redirect(url_for('login'))
+    # Admin route for deleting files
     @app.route('/delete_file/<filename>', methods=['POST'])
     def delete_file(filename):
+        # Ensure the user is logged in
         if 'email' in session:
-            # Initialize GCS client
-            client = get_gcs_client()
-            bucket = client.bucket(GCS_BUCKET_NAME)
-            blob = bucket.blob(filename)
-            
-            # Delete the file from GCS
-            blob.delete()
-            
-            # Optionally delete file metadata from MongoDB
-            db.files.delete_one({'filename': filename, 'email': session['email']})
-            
-            flash(f'File {filename} deleted successfully from GCS!', 'success')
+            try:
+                # Delete the file from Google Cloud Storage
+                client = get_gcs_client()
+                bucket = client.bucket(GCS_BUCKET_NAME)
+                blob = bucket.blob(filename)
+                
+                
+                blob.delete()
+
+                # Remove the file metadata from MongoDB
+                db.files.delete_one({'filename': filename})  
+
+                flash(f'File {filename} deleted successfully from GCS and database!', 'success')
+            except Exception as e:
+                flash(f'An error occurred while deleting the file: {str(e)}', 'error')
+
             return redirect(url_for('manage_files'))
         else:
             flash('Unauthorized action!', 'error')
-            return redirect(url_for('loginMenu'))
+            return redirect(url_for('login'))
