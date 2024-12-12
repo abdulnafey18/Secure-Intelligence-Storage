@@ -4,6 +4,10 @@ from bson.objectid import ObjectId # Initialising MongoDB database connection
 from database.sql_db import get_db_connection # Establishes a connection to the SQLite database
 
 def page_routes(app):
+    # Redirect to '/homepage'
+    @app.route('/')
+    def root():
+        return redirect('/homepage')
     # Homepage route to render the application's homepage
     @app.route('/homepage')
     def homepage():
