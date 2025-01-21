@@ -1,21 +1,30 @@
-import sqlite3  # Import SQLite library for handling SQLite databases
-from cryptography.fernet import Fernet  # Import Fernet for encryption and decryption of data
-import os  # Import `os` module for handling environment variables and file paths
+import sqlite3  # SQLite for database operations
+from cryptography.fernet import Fernet  # Encryption
+import os  # Environment variable handling
 
-# Fetch the encryption key from the environment variables or generate a new one
-# This key is used for encrypting and decrypting sensitive data like MFA secrets
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", Fernet.generate_key())  
+# Secure Paths Using Environment Variables
+KEY_FILE = os.getenv("ENCRYPTION_KEY_PATH", "Secure Intelligence Storage/database/encryption_key.key")
+DB_PATH = os.getenv("DB_PATH", "Secure Intelligence Storage/database/secure_intelligence_storage.db")
+
+# Load the encryption key securely
+if os.path.exists(KEY_FILE):
+    with open(KEY_FILE, "rb") as key_file:
+        ENCRYPTION_KEY = key_file.read()
+else:
+    ENCRYPTION_KEY = Fernet.generate_key()
+    with open(KEY_FILE, "wb") as key_file:
+        key_file.write(ENCRYPTION_KEY)
+    os.chmod(KEY_FILE, 0o600)  # Restrict file access
+
 cipher_suite = Fernet(ENCRYPTION_KEY)
 
-# Establish a connection to the SQLite database file
-# The database connection uses row factory to enable access to data by column names
+# Secure database connection
 def get_db_connection():
-    connection = sqlite3.connect('secure_intelligence_storage.db')
+    connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row  
     return connection
 
-# Create users tables in the SQLite database
-# This table stores user information, including email, hashed password, MFA secrets, and roles
+# Initialize database securely
 def initialize_database():
     connection = get_db_connection()
     with connection:
@@ -30,7 +39,7 @@ def initialize_database():
         ''')
     connection.close()
 
-# Insert a new user into the 'users' table with their email, hashed password, and default user role
+# Insert a new user securely
 def insert_user(email, password_hash):
     connection = get_db_connection()
     with connection:
@@ -40,17 +49,19 @@ def insert_user(email, password_hash):
         )
     connection.close()
 
-# Find and return a user by their email address from the 'users' table
+# Fetch user securely
 def find_user_by_email(email):
     connection = get_db_connection()
-    user = connection.execute(
+    cursor = connection.cursor()
+    cursor.execute(
         'SELECT id, email, password_hash, mfa_secret, role FROM users WHERE email = ?',
         (email,)
-    ).fetchone()
+    )
+    row = cursor.fetchone()
     connection.close()
-    return user
+    return dict(row) if row else None 
 
-# Update the MFA secret for a user, encrypting the secret before storing it in the database
+# Encrypt and store MFA secret
 def update_mfa_secret(email, mfa_secret):
     encrypted_secret = encrypt_secret(mfa_secret)
     connection = get_db_connection()
@@ -61,15 +72,15 @@ def update_mfa_secret(email, mfa_secret):
         )
     connection.close()
 
-# Encrypt a given string using the encryption cipher (Fernet)
+# Encryption
 def encrypt_secret(secret):
     return cipher_suite.encrypt(secret.encode())
 
-# Decrypt an encrypted string using the encryption cipher (Fernet)
+# Decryption
 def decrypt_secret(encrypted_secret):
     return cipher_suite.decrypt(encrypted_secret).decode()
 
-# Delete a user from the 'users' table by their unique ID
+# Delete user securely
 def delete_user_by_id(user_id):
     connection = get_db_connection()
     with connection:

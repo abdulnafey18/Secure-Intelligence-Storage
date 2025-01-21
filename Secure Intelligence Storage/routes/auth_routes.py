@@ -16,19 +16,22 @@ def auth_routes(app):
             flash('Please log in first.', 'error')
             return redirect(url_for('login'))
 
+        # Generate a new MFA secret
+        secret = pyotp.random_base32()
         
-        secret = pyotp.random_base32() # Generate a random MFA secret for the user
-        update_mfa_secret(session['email'], secret) # Save the secret in the database
+        # Store MFA secret in the database **securely** for the user
+        update_mfa_secret(session['email'], secret)
 
-        # Generate an OTP URI and create a QR code for it
+        # Generate OTP URI and QR code
         otp_uri = pyotp.TOTP(secret).provisioning_uri(
             session['email'], issuer_name="Secure Intelligence Storage"
         )
-        qr = qrcode.make(otp_uri) # Create QR code for scanning with google authenticator app
+        qr = qrcode.make(otp_uri)
         buffer = BytesIO()
         qr.save(buffer, 'PNG')
         buffer.seek(0)
-        return send_file(buffer, mimetype='image/png') # Send the QR code to the user
+
+        return send_file(buffer, mimetype='image/png')
     # Registration route to handle user registration with email and hashed password
     @app.route('/register', methods=['GET', 'POST'])
     def register():
@@ -49,32 +52,52 @@ def auth_routes(app):
         return render_template('register_menu.html')
     # Login route to authenticate the user with email, password, and MFA
     @app.route('/login', methods=['GET', 'POST'])
+    @app.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
             email = request.form['email']
             password = request.form['password']
             otp = request.form.get('otp')  
-            user = find_user_by_email(email)
-            # Verify credentials and MFA if enabled
+
+            user = find_user_by_email(email)  
+
+            # Ensure user exists and password is correct
             if user and check_password_hash(user['password_hash'], password):  
-                if user['mfa_secret']: # Check if MFA is enabled for the user
-                    decrypted_mfa_secret = decrypt_secret(user['mfa_secret'])  
-                    totp = pyotp.TOTP(decrypted_mfa_secret) 
-                    if not otp or not totp.verify(otp):  
-                        flash('Invalid or missing OTP. Please try again.', 'error')
+                if 'mfa_secret' in user and user['mfa_secret']:  
+                    try:
+                        decrypted_mfa_secret = decrypt_secret(user['mfa_secret'])
+
+                        # Ensure MFA secret is decrypted correctly
+                        if not decrypted_mfa_secret:
+                            flash('Error retrieving MFA secret. Try again.', 'error')
+                            return redirect(url_for('login'))
+
+                        print(f"Decrypted MFA Secret: {decrypted_mfa_secret}")  
+
+                        totp = pyotp.TOTP(decrypted_mfa_secret)
+
+                        # Ensure OTP is provided and is correct
+                        if not otp or not totp.verify(otp):  
+                            flash('Invalid or missing OTP. Please try again.', 'error')
+                            return redirect(url_for('login'))
+
+                    except Exception as e:
+                        flash(f"Error verifying MFA: {str(e)}", 'error')
                         return redirect(url_for('login'))
 
-                # Save user session and redirect based on role
+                # Save user session and redirect
                 session['email'] = user['email']
-                session['role'] = user['role']  
+                session['role'] = user['role']
 
                 if user['role'] == 'admin':
                     return redirect(url_for('adminDashboard'))  
                 else:
                     return redirect(url_for('userDashboard'))  
+
             else:
                 flash('Invalid credentials.', 'error')
                 return redirect(url_for('login'))
+
         return render_template('login_menu.html')
     # Logout route for clearing the session and logging out the user
     @app.route('/logout')
