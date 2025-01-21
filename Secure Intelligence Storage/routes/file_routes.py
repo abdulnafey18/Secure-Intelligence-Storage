@@ -188,28 +188,79 @@ def file_routes(app):
     def share():
         if 'email' not in session:
             return redirect(url_for('login'))
-        # Fetch all files belonging to the logged-in user
+
         user_files = list(db.files.find({'email': session['email']}))
-        # Handle file sharing on POST request
+
         if request.method == 'POST':
             recipient_email = request.form.get('recipient_email')
             filename = request.form.get('filename')
-            # Verify if the recipient exists in the database
+
             recipient = db.users.find_one({'email': recipient_email})
+            sender = db.users.find_one({'email': session['email']})
+
             if not recipient:
                 flash('Recipient not registered.', 'error')
                 return render_template('share.html', user_files=user_files)
 
-            # Insert a new record into the shared_files collection
-            db.shared_files.insert_one({
-                'sender': session['email'],
-                'recipient_email': recipient_email,
-                'filename': filename,
-                'shared_at': datetime.utcnow()
-            })
+            if 'file_password' not in sender or 'file_password' not in recipient:
+                flash('Both sender and recipient must have file passwords set.', 'error')
+                return redirect(url_for('share'))
 
-            flash(f'File shared successfully with {recipient_email}.', 'success')
-            return redirect(url_for('files'))
+            sender_password = request.form.get('file_password')
+            if not sender_password:
+                flash('Sender file password is required.', 'error')
+                return redirect(url_for('share'))
+
+            if not check_password_hash(sender['file_password'], sender_password):
+                flash('Incorrect sender password.', 'error')
+                return redirect(url_for('share'))
+
+            try:
+                # Retrieve recipient's hashed password
+                recipient_password_hash = recipient['file_password']
+
+                # Download encrypted file from Google Cloud Storage
+                client = get_gcs_client()
+                bucket = client.bucket(GCS_BUCKET_NAME)
+                blob = bucket.blob(filename)
+                encrypted_data = blob.download_as_bytes()
+
+                # Decrypt using sender's key
+                sender_key = hashlib.sha256(sender_password.encode()).digest()
+                iv = encrypted_data[:16]  # Extract IV
+                cipher = AES.new(sender_key, AES.MODE_CBC, iv)
+                decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
+
+                # Re-encrypt using recipient's password-derived key
+                new_iv = os.urandom(16)  
+                recipient_key = hashlib.sha256(recipient_password_hash.encode()).digest()  
+                new_cipher = AES.new(recipient_key, AES.MODE_CBC, new_iv)
+                new_encrypted_data = new_iv + new_cipher.encrypt(pad(decrypted_data, AES.block_size))
+
+                # Save the new encrypted file
+                new_filename = f"shared_{filename}"
+                new_blob = bucket.blob(new_filename)
+                new_blob.upload_from_string(new_encrypted_data)
+
+                print(f"Sender key: {sender_key.hex()}")
+                print(f"Recipient key (Encryption): {recipient_key.hex()}")
+                print(f"IV during encryption: {new_iv.hex()}")
+
+                # Store sharing info in DB
+                db.shared_files.insert_one({
+                    'sender': session['email'],
+                    'recipient_email': recipient_email,
+                    'filename': new_filename,
+                    'shared_at': datetime.utcnow(),
+                    'iv': new_iv.hex()  
+                })
+
+                flash(f'File shared successfully with {recipient_email}.', 'success')
+                return redirect(url_for('files'))
+
+            except Exception as e:
+                flash(f'Error sharing file: {str(e)}', 'error')
+                return redirect(url_for('share'))
 
         return render_template('share.html', user_files=user_files)
     # Route for serving a file directly from the upload folder
@@ -224,60 +275,63 @@ def file_routes(app):
         if 'email' not in session:
             flash('You need to log in first.', 'error')
             return redirect(url_for('login'))
-        # Fetch the shared file details from the shared_files collection
+
         shared_file = db.shared_files.find_one({'_id': ObjectId(shared_file_id)})
         if not shared_file:
             flash('Shared file not found.', 'error')
             return redirect(url_for('received_files'))
-        # Get the filename and sender/recipient details
+
         filename = shared_file['filename']
-        sender_email = shared_file['sender']
         recipient_email = session['email']
-        # Fetch sender and recipient details from the users collection
-        sender = db.users.find_one({'email': sender_email})
         recipient = db.users.find_one({'email': recipient_email})
-        # Handle GET request to display the password input form
+
         if request.method == 'GET':
             return render_template('receivers_enter_file_password.html', filename=filename, shared_file_id=shared_file_id)
-        # Retrieve the file password from the form
+
         file_password = request.form.get('file_password')
         if not file_password:
             flash('File password is required.', 'error')
             return redirect(url_for('download_shared_file', shared_file_id=shared_file_id))
 
-        # Verify the sender's file password
-        if not sender or not check_password_hash(sender.get('file_password', ''), file_password):
+        if not check_password_hash(recipient['file_password'], file_password):
             flash('Incorrect file password.', 'error')
             return redirect(url_for('download_shared_file', shared_file_id=shared_file_id))
 
         try:
-            # Download the encrypted file from Google Cloud Storage
+            # Retrieve IV from DB
+            iv = bytes.fromhex(shared_file['iv'])
+
+            # Generate decryption key using recipient's stored hashed password
+            recipient_key = hashlib.sha256(recipient['file_password'].encode()).digest()
+
+            # Download encrypted file
             client = get_gcs_client()
             bucket = client.bucket(GCS_BUCKET_NAME)
             blob = bucket.blob(filename)
             encrypted_data = blob.download_as_bytes()
 
-            # Ensure the encrypted data is valid
-            if len(encrypted_data) < 16:
-                raise ValueError("File data too short for valid IV and content.")
+            # Decrypt the file
+            cipher = AES.new(recipient_key, AES.MODE_CBC, iv)
 
-            # Decrypt the file using AES
-            sender_key = hashlib.sha256(file_password.encode()).digest()
-            iv = encrypted_data[:16]
-            cipher = AES.new(sender_key, AES.MODE_CBC, iv)
+            # Debugging print statements
+            print(f"Recipient key (Decryption): {recipient_key.hex()}")
+            print(f"IV during decryption: {iv.hex()}")
+            print(f"Encrypted data length: {len(encrypted_data)} bytes")
+
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
 
-            # Send the decrypted file to the recipient
             return send_file(
                 io.BytesIO(decrypted_data),
                 mimetype='application/octet-stream',
                 as_attachment=True,
-                download_name=filename.replace('.enc', '')  
+                download_name=filename.replace('.enc', '')
             )
 
         except ValueError as ve:
+            print(f"Padding error during decryption: {ve}")
             flash(f"Decryption failed due to padding: {str(ve)}", 'error')
         except Exception as e:
+            print(f"General decryption error: {e}")
             flash(f"Failed to download or decrypt the file: {str(e)}", 'error')
 
         return redirect(url_for('received_files'))
