@@ -10,7 +10,7 @@ from Crypto.Cipher import AES # For AES encryption and decryption
 from Crypto.Util.Padding import pad, unpad # For padding/unpadding data for AES encryption
 import hashlib # To generate secure keys using SHA-256
 from io import BytesIO # For working with file-like objects in memory
-import os, io  # Standard Python modules for file and path handling
+import os, io, re  # Standard Python modules for file and path handling
 
 def file_routes(app):
     # Route for listing files belonging to the logged-in user
@@ -28,18 +28,30 @@ def file_routes(app):
         visible_files = [file for file in user_files if not file['filename'].startswith('.')]
 
         return render_template('files.html', files=visible_files)
+    # Function to validate a strong file password
+    def is_strong_password(password):
+        pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+        return re.match(pattern, password)
     # Route for setting a file password (additional security for file encryption)
     @app.route('/set_file_password', methods=['GET', 'POST'])
     def set_file_password():
         if 'email' not in session:
             return redirect(url_for('login'))
-        # Handle POST request to set the file password
+
         if request.method == 'POST':
             file_password = request.form['file_password']
-            hashed_file_password = generate_password_hash(file_password) # Hash the password for secure storage
+
+            # Validate file password
+            if not is_strong_password(file_password):
+                flash("File password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character.", "error")
+                return redirect(url_for('set_file_password'))
+
+            hashed_file_password = generate_password_hash(file_password)  # Hash the password
             db.users.update_one({'email': session['email']}, {'$set': {'file_password': hashed_file_password}})
+            
             flash('Passwords set successfully!', 'success')
             return redirect(url_for('userDashboard'))
+
         return render_template('set_file_password.html')
     # Route for uploading a file
     @app.route('/upload', methods=['GET', 'POST'])
@@ -400,7 +412,7 @@ def file_routes(app):
             except Exception as e:
                 flash(f'An error occurred while deleting the file: {str(e)}', 'error')
 
-            return redirect(url_for('manage_files'))
+            return redirect(url_for('files'))
         else:
             flash('Unauthorized action!', 'error')
             return redirect(url_for('login'))

@@ -23,6 +23,16 @@
         </nav>
     </header>
     <main>
+                <!-- Flash messages section -->
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    <div class="success-message">
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
         <table>
             <thead>
                 <tr>

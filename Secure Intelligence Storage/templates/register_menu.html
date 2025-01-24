@@ -8,6 +8,35 @@
 </head>
 <body>
     <h1>Register</h1>
+   <!-- Display error message if it exists -->
+   {% with messages = get_flashed_messages(with_categories=true) %}
+   {% if messages %}
+       <ul class="error-messages">
+           {% for category, message in messages %}
+               {% if category == 'error' %}
+                   <li>{{ message | e }}</li>
+               {% endif %}
+           {% endfor %}
+       </ul>
+   {% endif %}
+{% endwith %}
+<script>
+    function validatePassword() {
+        let password = document.getElementById("password").value;
+        let message = document.getElementById("passwordMessage");
+        let strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    
+        if (!strongPasswordPattern.test(password)) {
+            message.innerHTML = "Password must be 8+ characters long and include one uppercase letter, one lowercase letter, one number, and one special character.";
+            message.style.color = "red";
+            return false;
+        } else {
+            message.innerHTML = "Strong password!";
+            message.style.color = "green";
+            return true;
+        }
+    }
+    </script>
     <!-- Registration form -->
     <form action="{{ url_for('register') }}" method="post">
         <!-- Input field for the user's email -->
