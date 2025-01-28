@@ -1,5 +1,6 @@
 from flask import Flask  # Import Flask for creating the web application
 from flask_talisman import Talisman  # Import Flask-Talisman to implement security headers
+from routes.admin_routes import admin_routes
 from routes.auth_routes import auth_routes  # Import authentication-related routes
 from routes.file_routes import file_routes  # Import file-related routes
 from routes.page_routes import page_routes  # Import page-related routes
@@ -33,6 +34,7 @@ Talisman(
 )
 
 # Registering the routes
+admin_routes(app)
 auth_routes(app)
 file_routes(app)
 page_routes(app)

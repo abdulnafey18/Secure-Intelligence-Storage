@@ -9,6 +9,7 @@ from gcs_client import get_gcs_client, GCS_BUCKET_NAME # Utility functions and c
 from Crypto.Cipher import AES # For AES encryption and decryption
 from Crypto.Util.Padding import pad, unpad # For padding/unpadding data for AES encryption
 import hashlib # To generate secure keys using SHA-256
+from database.mongo_db import add_log
 from io import BytesIO # For working with file-like objects in memory
 import os, io, re  # Standard Python modules for file and path handling
 
@@ -71,6 +72,10 @@ def file_routes(app):
             if 'file_password' in user:
                 if not check_password_hash(user['file_password'], file_password):
                     flash('Invalid file password.', 'error')
+
+                    # Log incorrect file password attempt during upload
+                    add_log("WARNING", f"User {session['email']} entered incorrect file password during upload")
+
                     return redirect(url_for('upload_file'))
             else:
                 flash('File password not set. Please set it first.', 'error')
@@ -101,6 +106,9 @@ def file_routes(app):
                     'upload_time': datetime.utcnow().isoformat()
                 })
 
+                # Log the file upload
+                add_log("INFO", f"User {session['email']} uploaded file: {filename}")
+
                 flash('File uploaded and encrypted successfully!', 'success')
                 return redirect(url_for('files'))
 
@@ -127,6 +135,10 @@ def file_routes(app):
 
         if not check_password_hash(user['file_password'], file_password):
             flash('Incorrect file password. Please try again.', 'error')
+
+            # Log incorrect file password attempt during download
+            add_log("WARNING", f"User {session['email']} entered incorrect file password for {filename} during download")
+
             return redirect(url_for('download_file', filename=filename))
 
         try:
@@ -141,6 +153,9 @@ def file_routes(app):
             iv = encrypted_data[:16] # Extract the initialization vector (IV)
             cipher = AES.new(key, AES.MODE_CBC, iv) 
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
+
+            # Log successful file download
+            add_log("INFO", f"User {session['email']} downloaded file: {filename}")
 
             # Send the decrypted file to the user for download
             return send_file(
@@ -225,6 +240,11 @@ def file_routes(app):
 
             if not check_password_hash(sender['file_password'], sender_password):
                 flash('Incorrect sender password.', 'error')
+
+                # Log incorrect file password attempt during sharing
+                add_log("WARNING", f"User {session['email']} entered incorrect file password while sharing {filename}")
+
+
                 return redirect(url_for('share'))
 
             try:
@@ -267,6 +287,10 @@ def file_routes(app):
                     'iv': new_iv.hex()  
                 })
 
+                # Log file sharing
+                add_log("INFO", f"User {session['email']} shared file: {filename} with {recipient_email}")
+
+
                 flash(f'File shared successfully with {recipient_email}.', 'success')
                 return redirect(url_for('files'))
 
@@ -307,6 +331,11 @@ def file_routes(app):
 
         if not check_password_hash(recipient['file_password'], file_password):
             flash('Incorrect file password.', 'error')
+
+            # Log incorrect file password attempt for shared file
+            add_log("WARNING", f"User {session['email']} entered incorrect file password for shared file: {filename}")
+
+
             return redirect(url_for('download_shared_file', shared_file_id=shared_file_id))
 
         try:
@@ -332,6 +361,9 @@ def file_routes(app):
 
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
 
+            # Log successful shared file download
+            add_log("INFO", f"User {session['email']} downloaded shared file: {filename}")
+
             return send_file(
                 io.BytesIO(decrypted_data),
                 mimetype='application/octet-stream',
@@ -353,9 +385,11 @@ def file_routes(app):
         if 'email' in session:
             user_email = session['email']
             
-            
             db.shared_files.delete_one({'_id': ObjectId(file_id), 'recipient_email': user_email})
             
+            # Log the deletion of a received shared file
+            add_log("INFO", f"User {session['email']} deleted received file: {file_id}")
+
             flash('Received file deleted successfully!', 'success')
             return redirect(url_for('received_files'))
         else:
@@ -407,6 +441,9 @@ def file_routes(app):
 
                 # Remove the file metadata from MongoDB
                 db.files.delete_one({'filename': filename})  
+
+                # Log the deletion of an uploaded file
+                add_log("INFO", f"User {session['email']} deleted file: {filename}")
 
                 flash(f'File {filename} deleted successfully from GCS and database!', 'success')
             except Exception as e:

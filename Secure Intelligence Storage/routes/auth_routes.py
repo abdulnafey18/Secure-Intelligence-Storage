@@ -4,6 +4,7 @@ import pyotp, qrcode, re
 from io import BytesIO 
 from database.sql_db import initialize_database, insert_user, find_user_by_email, update_mfa_secret
 from database.mongo_db import db # MongoDB database for file metadata
+from database.mongo_db import add_log
 from database.sql_db import get_db_connection, find_user_by_email, update_mfa_secret, decrypt_secret
 
 initialize_database() # Initialize the SQLite database and tables.
@@ -89,6 +90,10 @@ def auth_routes(app):
                         # Ensure OTP is provided and is correct
                         if not otp or not totp.verify(otp):  
                             flash('Invalid or missing OTP. Please try again.', 'error')
+                            
+                            # Log failed MFA attempt
+                            add_log("WARNING", f"Failed MFA attempt for {email}: Incorrect OTP entered")
+
                             return redirect(url_for('login'))
 
                     except Exception as e:
@@ -106,6 +111,10 @@ def auth_routes(app):
 
             else:
                 flash('Invalid credentials.', 'error')
+
+                # Log failed login due to incorrect password
+                add_log("WARNING", f"Failed login attempt for {email}: Incorrect password")
+
                 return redirect(url_for('login'))
 
         return render_template('login_menu.html')

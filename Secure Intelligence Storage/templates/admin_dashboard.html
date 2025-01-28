@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+    <script src="{{ url_for('static', filename='log_script.js') }}" defer></script>
 </head>
 <body>
     <header>
@@ -34,10 +35,30 @@
                 </ul>
             </section>
 
-            <!-- Section for displaying logs -->
-            <section class="user-activity">
-                <h3>Log Monitoring</h3>
-            </section>
+<!-- Section for displaying logs -->
+<section class="user-activity">
+    <h3>Log Monitoring</h3>
+
+    <!-- Dropdown to select log type -->
+    <label for="logType">Log Type:</label>
+    <select id="logType">
+        <option value="INFO">INFO - File Activity</option>
+        <option value="WARNING">WARNING - Login Failures</option>
+    </select>
+
+    <!-- Logs Table -->
+    <table id="logTable">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody id="logDisplay">
+            <!-- Logs will be inserted here -->
+        </tbody>
+    </table>
+</section>
 
             <!-- Sidebar for user and file management -->
             <aside class="user-management">

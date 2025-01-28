@@ -301,8 +301,8 @@ span {
     padding: 20px;
     border-radius: 5px;
     border: 1px solid #ddd;
-    display: flex;
-    height: 100%; 
+text-align: center;
+    height: auto; 
 }
 
 .insights-box {
