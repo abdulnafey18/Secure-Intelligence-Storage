@@ -77,3 +77,6 @@ def page_routes(app):
         else:
             flash('Unauthorized access!', 'error')
             return redirect(url_for('login'))
+    @app.route('/nmap_scanner')
+    def nmap_scanner():
+        return render_template('nmap_scanner.html')

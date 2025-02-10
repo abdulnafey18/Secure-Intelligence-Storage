@@ -338,3 +338,16 @@ text-align: center;
 .user-management ul li a:hover {
     text-decoration: underline;
 }
+
+.scan-button-container {
+    display: flex;
+    padding: 10px 10px;
+    justify-content: center;  /* Centers horizontally */
+    align-items: center;      /* Centers vertically if needed */
+    margin-bottom: 20px;      /* Adds spacing below the button */
+}
+
+h3 {
+text-align: center;
+color: #ffffff;
+}

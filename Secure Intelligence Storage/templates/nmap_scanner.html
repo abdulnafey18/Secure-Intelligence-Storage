@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nmap Scanner</title>
+    <script src="{{ url_for('static', filename='nmap_script.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Secure Intelligence Storage</h1>
+        <h2>Network Scanning (Nmap)</h2>
+        <nav class="nav1">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        
+        <nav class="nav2">
+        <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
+        <a href="{{ url_for('upload_file') }}">Upload Files</a>
+        <a href="{{ url_for('files') }}">View Files</a>
+        <a href="{{ url_for('share') }}">Share Files</a>
+        <a href="{{ url_for('received_files') }}">Received Files</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="nmap-scanner">
+            <div class="scan-button-container">
+                <button id="scanButton" type="submit">Run Scan</button>
+            </div>
+
+            <h3>Scan Results</h3>
+            <table id="scanResults">
+                <thead>
+                    <tr>
+                        <th>Host</th>
+                        <th>Port</th>
+                        <th>State</th>
+                        <th>Service</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <h3>Threat Logs</h3>
+            <table id="threatLogs">
+                <thead>
+                    <tr>
+                        <th>Host</th>
+                        <th>Port</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>
