@@ -3,7 +3,7 @@ import os  # Import the `os` module for handling file paths and environment vari
 from datetime import datetime  # Import datetime for timestamping logs.
 
 # Connect to MongoDB
-client = MongoClient('mongodb://mongodb-container:27017/')
+client = MongoClient('mongodb://admin:ViSiOn%402020@localhost:27017/secure_intelligence_storage?authSource=admin')
 db = client['secure_intelligence_storage']
 
 # Define the folder path where uploaded files will be stored

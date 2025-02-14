@@ -2,9 +2,9 @@ import sqlite3  # SQLite for database operations
 from cryptography.fernet import Fernet  # Encryption
 import os  # Environment variable handling
 
-# Secure Paths Using Environment Variables
-KEY_FILE = os.getenv("ENCRYPTION_KEY_PATH", "Secure Intelligence Storage/database/encryption_key.key")
-DB_PATH = os.getenv("DB_PATH", "Secure Intelligence Storage/database/secure_intelligence_storage.db")
+# Secure Paths Using Environment Variable
+KEY_FILE = "/home/ec2-user/Secure-Intelligence-Storage/Secure Intelligence Storage/database/encryption_key.key"
+DB_PATH = os.getenv("DB_PATH", "/home/ec2-user/Secure-Intelligence-Storage/Secure Intelligence Storage/database/secure_intelligence_storage.db")
 
 # Load the encryption key securely
 if os.path.exists(KEY_FILE):

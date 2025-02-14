@@ -56,7 +56,6 @@ def auth_routes(app):
                 return redirect(url_for('register'))
 
             insert_user(email, password_hash)  # Add user to the database
-            db.users.insert_one({'email': email, 'file_password': None})  # Add user to MongoDB for file handling
 
             session['email'] = email  # Log the user in after registration
             return redirect(url_for('set_file_password'))  # Redirect to file password setup
