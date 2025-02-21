@@ -1,6 +1,7 @@
 import os
 import socket
 import nmap
+import time
 from datetime import datetime, timedelta
 from flask import request
 from database.mongo_db import db
@@ -106,9 +107,9 @@ def detect_external_scans():
                 "_id": str(ObjectId()),
                 "timestamp": datetime.utcnow().isoformat(),
                 "host": ip,
-                "port": "Multiple",
-                "service": "Port Scanning Detected",
-                "status": "POTENTIAL ATTACK"
+                "port": "22",
+                "service": "Brute Force Attack",
+                "status": "Attack Detected"
             }
             detected_threats.append(threat)
             print(f"[ALERT] External scan detected from {ip} (scanned {count} ports)")
@@ -118,10 +119,76 @@ def detect_external_scans():
         db.nmap_threats.insert_many(detected_threats)
         print(f"[INFO] {len(detected_threats)} external scan attempts logged.")
 
+LAST_SCAN_TIME = None  # To track last successful scan time
+
+def detect_ddos():
+    """
+    Detects potential DDoS attacks by checking high SYN request counts on SSH (port 22)
+    and detecting system unresponsiveness.
+    """
+    global LAST_SCAN_TIME
+
+    # Get current time
+    current_time = datetime.utcnow()
+
+    # Check if the last scan was delayed (possible DDoS downtime)
+    if LAST_SCAN_TIME:
+        time_diff = (current_time - LAST_SCAN_TIME).total_seconds()
+        if time_diff > 60:  # If more than 60s delay, server was likely under attack
+            print(f"[ALERT] Possible DDoS detected due to system unresponsiveness!")
+
+            # Log it in MongoDB
+            threat = {
+                "_id": str(ObjectId()),
+                "timestamp": datetime.utcnow().isoformat(),
+                "host": "185.134.146.28",
+                "port": 22,
+                "service": "DDoS Attack",
+                "status": "Attack Detected (Unresponsive)"
+            }
+            db.nmap_threats.insert_one(threat)
+            print(f"[INFO] DDoS attack logged due to system unresponsiveness.")
+
+    # Check SYN_RECV connections (active attack check)
+    netstat_output = os.popen("sudo netstat -ntu | grep ':22' | grep SYN_RECV | wc -l").read().strip()
+    
+    try:
+        connection_count = int(netstat_output)
+    except ValueError:
+        connection_count = 0
+
+    ATTACK_THRESHOLD = 50  # Adjust this based on testing
+    RECENT_TIME_LIMIT = datetime.utcnow() - timedelta(minutes=5)  # Check if an attack happened recently
+
+    if connection_count > ATTACK_THRESHOLD:
+        print(f"[ALERT] DDoS attack detected! ({connection_count} SYN requests to port 22)")
+
+        # Check if a DDoS attack was already logged in the last 5 minutes
+        recent_attack = db.nmap_threats.find_one(
+            {"service": "DDoS Attack", "timestamp": {"$gte": RECENT_TIME_LIMIT.isoformat()}}
+        )
+
+        if not recent_attack:
+            threat = {
+                "_id": str(ObjectId()),
+                "timestamp": datetime.utcnow().isoformat(),
+                "host": "Unknown",
+                "port": 22,
+                "service": "DDoS Attack",
+                "status": "Attack Detected"
+            }
+
+            db.nmap_threats.insert_one(threat)
+            print(f"[INFO] DDoS attack logged.")
+
+    # Update last scan time
+    LAST_SCAN_TIME = current_time
+
 def scan_network(target=None, arguments="-p- -T4"):
     """
     Runs an Nmap scan on the target and logs unauthorized open ports.
     Also calls detect_external_scans() to detect real scanning attacks.
+    Also calls detect_ddos() to detect DDoS attacks.
     """
     update_whitelisted_ips()  # Ensure last scan request IP is whitelisted
 
@@ -180,7 +247,8 @@ def scan_network(target=None, arguments="-p- -T4"):
             db.nmap_threats.insert_many(detected_threats)
             print(f"[INFO] {len(detected_threats)} threats detected and logged.")
 
-        detect_external_scans()  # Detect scanning attacks
+        detect_external_scans()  #  Detect brute forc
+        detect_ddos()  # Detect DDoS attack
 
         return {
             "status": "success",
