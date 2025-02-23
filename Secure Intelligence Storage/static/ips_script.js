@@ -39,13 +39,3 @@ function fetchBlockedIPs() {
 // Fetch blocked IPs on page load
 document.addEventListener("DOMContentLoaded", fetchBlockedIPs);
 
-function controlIPS(action) {
-    fetch("/control_ips", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `action=${action}`
-    }).then(response => response.json()).then(data => {
-        alert(data.message);
-        location.reload();
-    });
-}

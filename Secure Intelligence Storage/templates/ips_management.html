@@ -4,13 +4,13 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nmap Scanner</title>
+    <title>IPS Management</title>
     <script src="{{ url_for('static', filename='ips_script.js') }}" defer></script>
 </head>
 <body>
     <header>
         <h1>Secure Intelligence Storage</h1>
-        <h2>Network Scanning (Nmap)</h2>
+        <h2>Intrusion Prevention System (IPS) Management</h2>
         <nav class="nav1">
             <a href="{{ url_for('logout') }}">Logout</a>
         </nav>
@@ -23,7 +23,6 @@
         <a href="{{ url_for('received_files') }}">Received Files</a>
         </nav>
     </header>
-    <h1>Intrusion Prevention System (IPS) Management</h1>
 
     <h3>Blocked IPs</h3>
     <table>
@@ -40,12 +39,10 @@
         </tbody>
     </table>
 
-    <h3>Unblock IP</h3>
+<h3>Unblock IP</h3>
+<div class="unblock-container">
     <input type="text" id="ip_to_unblock" placeholder="Enter IP to unblock">
-    <button onclick="unblockIP()">Unblock</button>
-
-    <h3>Start/Stop IPS</h3>
-    <button onclick="controlIPS('start')">Start IPS</button>
-    <button onclick="controlIPS('stop')">Stop IPS</button>
+    <button class="unblock-btn" onclick="unblockIP()">Unblock</button>
+</div>
 </body>
 </html>

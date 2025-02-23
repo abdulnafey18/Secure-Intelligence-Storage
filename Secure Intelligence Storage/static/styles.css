@@ -351,3 +351,39 @@ h3 {
 text-align: center;
 color: #ffffff;
 }
+
+input[type="text"]#ip_to_unblock {
+    width: 300px; /* Adjust width */
+    max-width: 100%; /* Ensure it doesn't overflow */
+    padding: 8px;
+    font-size: 14px;
+}
+
+.unblock-container {
+    display: flex;
+    justify-content: center;  /* Centers horizontally */
+    align-items: center;      /* Aligns items vertically */
+    gap: 10px;                /* Space between input and button */
+    margin: 20px auto;        /* Centers the container */
+    width: fit-content;
+}
+
+.unblock-container input {
+    width: 300px;             /* Ensures input is wide enough */
+    padding: 10px;
+    height: 40px;             /* Force input to be the same height as the button */
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.unblock-container button {
+    background-color: red;
+    color: white;
+    padding: 10px 20px;  /* Controls size naturally */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;  /* Ensures text is vertically centered */
+    justify-content: center;
+}

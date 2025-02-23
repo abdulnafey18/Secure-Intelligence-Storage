@@ -1,4 +1,5 @@
-from flask import render_template, redirect, url_for, session, flash, make_response, os, jsonify, request
+import os
+from flask import render_template, redirect, url_for, session, flash, make_response, jsonify, request
 from database.mongo_db import db # MongoDB database for file metadata
 from bson.objectid import ObjectId # Initialising MongoDB database connection
 from database.sql_db import get_db_connection # Establishes a connection to the SQLite database
@@ -115,26 +116,6 @@ def page_routes(app):
         db.blocked_ips.delete_one({"ip": ip})
 
         return jsonify({"status": "success", "message": f"IP {ip} unblocked"})
-
-    # Route to start/stop IPS
-    @app.route('/control_ips', methods=['POST'])
-    def control_ips():
-        action = request.form.get('action')
-
-        if action == "start":
-            # Check if IPS is already running
-            existing_processes = os.popen("pgrep -f ips_blocker.py").read().strip()
-            if existing_processes:
-                return jsonify({"status": "error", "message": "IPS is already running!"})
-
-            os.system("python3 security/ips_blocker.py &")
-            return jsonify({"status": "success", "message": "IPS started in background"})
-        
-        elif action == "stop":
-            os.system("pkill -f ips_blocker.py")
-            return jsonify({"status": "success", "message": "IPS stopped"})
-
-        return jsonify({"status": "error", "message": "Invalid action"}), 400
     
     @app.route('/get_blocked_ips')
     def get_blocked_ips():
