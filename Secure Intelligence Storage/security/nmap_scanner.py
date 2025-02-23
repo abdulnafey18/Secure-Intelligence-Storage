@@ -20,9 +20,7 @@ except Exception as e:
     print(f"[ERROR] Nmap is not installed or not in PATH: {e}")
 
 def get_instance_ips():
-    """
-    Get the EC2 instance's private and public IPs.
-    """
+
     try:
         instance_private_ip = socket.gethostbyname(socket.gethostname())  # Private IP
         instance_public_ip = os.popen("curl -s ifconfig.me").read().strip()  # Fetch external IP
@@ -33,10 +31,7 @@ def get_instance_ips():
         return None, None
 
 def update_whitelisted_ips():
-    """
-    Dynamically update the whitelist to include trusted IPs.
-    Ensures scan requests & safe connections are not flagged.
-    """
+
     global WHITELISTED_IPS
 
     # Fetch EC2 instance IPs
@@ -57,10 +52,7 @@ def update_whitelisted_ips():
     print(f"[INFO] Updated Whitelist: {WHITELISTED_IPS}")
 
 def detect_external_scans():
-    """
-    Detects real external scans by checking active TCP connections, 
-    even from whitelisted IPs if they show attack-like behavior.
-    """
+
     print("[INFO] Running detect_external_scans()...")
 
     # Get active TCP connections
@@ -122,10 +114,7 @@ def detect_external_scans():
 LAST_SCAN_TIME = None  # To track last successful scan time
 
 def detect_ddos():
-    """
-    Detects potential DDoS attacks by checking high SYN request counts on SSH (port 22)
-    and detecting system unresponsiveness.
-    """
+
     global LAST_SCAN_TIME
 
     # Get current time
@@ -185,11 +174,7 @@ def detect_ddos():
     LAST_SCAN_TIME = current_time
 
 def scan_network(target=None, arguments="-p- -T4"):
-    """
-    Runs an Nmap scan on the target and logs unauthorized open ports.
-    Also calls detect_external_scans() to detect real scanning attacks.
-    Also calls detect_ddos() to detect DDoS attacks.
-    """
+
     update_whitelisted_ips()  # Ensure last scan request IP is whitelisted
 
     instance_ip, instance_public_ip = get_instance_ips()

@@ -43,35 +43,63 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+// Fetch threats and populate the table
 function fetchThreatLogs() {
-    console.log("Fetching latest threat logs...");
     fetch("/get_threat_logs")
-        .then(response => response.json())
-        .then(data => {
-            console.log("Threat Logs Data:", data);
-            let tableBody = document.querySelector("#threatLogs tbody");
-            tableBody.innerHTML = "";  // Clear previous data
+    .then(response => response.json())
+    .then(data => {
+        let tableBody = document.getElementById("threatLogTable");
+        tableBody.innerHTML = ""; // Clear existing data
 
-            if (data.length === 0) {
-                tableBody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No threats detected</td></tr>";
-                return;
+        data.forEach(threat => {
+            let row = document.createElement("tr");
+
+            // Check if the IP is already blocked
+            let actionButton = `<button onclick="blockIP('${threat.host}')">Block</button>`;
+            if (threat.status === "Blocked") {
+                actionButton = `<button onclick="unblockIP('${threat.host}')">Unblock</button>`;
             }
 
-	data.reverse().forEach(threat => {
-                let formattedTimestamp = formatTimestamp(threat.timestamp);  //  Format timestamp
+            row.innerHTML = `
+                <td>${new Date(threat.timestamp).toLocaleString()}</td>
+                <td>${threat.host}</td>
+                <td>${threat.port}</td>
+                <td>${threat.service}</td>
+                <td>${threat.status}</td>
+                <td>${actionButton}</td> <!-- Block/Unblock Button -->
+            `;
 
-                let row = `<tr>
-                    <td>${formattedTimestamp}</td>  <!--  Display formatted timestamp -->
-                    <td>${threat.host}</td>
-                    <td>${threat.port}</td>
-                    <td>${threat.service}</td>
-                    <td style="color: red;">${threat.status}</td>
-                </tr>`;
-                tableBody.innerHTML += row;
-            });
-        })
-        .catch(error => console.error("Error fetching threat logs:", error));
+            tableBody.appendChild(row);
+        });
+    });
 }
+
+// Block IP function
+function blockIP(ip) {
+    fetch("/block_ip", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `ip=${ip}`
+    }).then(response => response.json()).then(data => {
+        alert(data.message);
+        fetchThreatLogs(); // Refresh the table
+    });
+}
+
+// Unblock IP function
+function unblockIP(ip) {
+    fetch("/unblock_ip", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `ip=${ip}`
+    }).then(response => response.json()).then(data => {
+        alert(data.message);
+        fetchThreatLogs(); // Refresh the table
+    });
+}
+
+// Load threat logs on page load
+document.addEventListener("DOMContentLoaded", fetchThreatLogs);
 
 //  Function to format the timestamp properly
 function formatTimestamp(timestamp) {
