@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nmap Scanner</title>
+    <script src="{{ url_for('static', filename='ips_script.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Secure Intelligence Storage</h1>
+        <h2>Network Scanning (Nmap)</h2>
+        <nav class="nav1">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        
+        <nav class="nav2">
+        <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
+        <a href="{{ url_for('upload_file') }}">Upload Files</a>
+        <a href="{{ url_for('files') }}">View Files</a>
+        <a href="{{ url_for('share') }}">Share Files</a>
+        <a href="{{ url_for('received_files') }}">Received Files</a>
+        </nav>
+    </header>
+    <h1>Intrusion Prevention System (IPS) Management</h1>
+
+    <h3>Blocked IPs</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>IP Address</th>
+                <th>Reason</th>
+                <th>Timestamp</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="blockedIpsTable">
+            <!-- Data will be dynamically inserted here -->
+        </tbody>
+    </table>
+
+    <h3>Unblock IP</h3>
+    <input type="text" id="ip_to_unblock" placeholder="Enter IP to unblock">
+    <button onclick="unblockIP()">Unblock</button>
+
+    <h3>Start/Stop IPS</h3>
+    <button onclick="controlIPS('start')">Start IPS</button>
+    <button onclick="controlIPS('stop')">Stop IPS</button>
+</body>
+</html>
