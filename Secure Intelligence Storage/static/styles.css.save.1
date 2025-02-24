@@ -8,6 +8,11 @@
     padding: 20px;
 }
 
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
 .btn {
     padding: 8px 16px;
     margin: 5px;
@@ -224,16 +229,18 @@ color: #fff;
 }
 
 table {
-    width: 80%;
-    max-width: 1000px;
+    width: 50%;
     border-collapse: collapse;
     color: white;
-    margin: 20px auto; 
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1.5%;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 th, td {
-    padding: 8px 5px;
+    padding: 12px;
     text-align: center;
     border: 1px solid #ddd;
 }
@@ -269,10 +276,10 @@ nav a:hover {
 }
 
 button[type="submit"] {
-    padding: 5px 10px;
     background-color: red;
     color: white;
     border: none;
+    padding: 5px 10px;
     border-radius: 3px;
     cursor: pointer;
 }
@@ -333,14 +340,50 @@ text-align: center;
 }
 
 .scan-button-container {
-    display: flex; 
+    display: flex;
     padding: 10px 10px;
-    justify-content: center;  
-    align-items: center;      
-    margin-bottom: 20px;
+    justify-content: center;  /* Centers horizontally */
+    align-items: center;      /* Centers vertically if needed */
+    margin-bottom: 20px;      /* Adds spacing below the button */
 }
 
 h3 {
 text-align: center;
 color: #ffffff;
+}
+
+input[type="text"]#ip_to_unblock {
+    width: 300px; /* Adjust width */
+    max-width: 100%; /* Ensure it doesn't overflow */
+    padding: 8px;
+    font-size: 14px;
+}
+
+.unblock-container {
+    display: flex;
+    justify-content: center;  /* Centers horizontally */
+    align-items: center;      /* Aligns items vertically */
+    gap: 10px;                /* Space between input and button */
+    margin: 20px auto;        /* Centers the container */
+    width: fit-content;
+}
+
+.unblock-container input {
+    width: 300px;             /* Ensures input is wide enough */
+    padding: 10px;
+    height: 40px;             /* Force input to be the same height as the button */
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.unblock-container button {
+    background-color: red;
+    color: white;
+    padding: 10px 20px;  /* Controls size naturally */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;  /* Ensures text is vertically centered */
+    justify-content: center;
 }

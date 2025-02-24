@@ -48,15 +48,35 @@
                 <thead>
                     <tr>
                         <th>Time</th>
-		                <th>Host</th>
+		        <th>Host</th>
                         <th>Port</th>
                         <th>Service</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="threatLogTable">
-                    <!-- Data dynamically added via JavaScript -->
+                  <tbody>
+                    {% for threat in threat_logs %}
+                    <tr>
+                        <td>{{ threat.timestamp }}</td>
+                        <td>{{ threat.host }}</td>
+                        <td>{{ threat.port }}</td>
+                        <td>{{ threat.service }}</td>
+                        <td id="status-{{ threat.host }}">{{ threat.status }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('toggle_ip_block') }}">
+                                <input type="hidden" name="ip" value="{{ threat.host }}">
+                                <button type="submit" class="block-btn">
+                                    {% if threat.status == "Blocked" %}
+                                        Unblock
+                                    {% else %}
+                                        Block
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </section>

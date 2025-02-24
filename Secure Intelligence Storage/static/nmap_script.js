@@ -16,8 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Scan Response Data:", data);
             if (data.status === "success") {
                 displayResults(data.results);
-                //  Fetch latest threats separately
-                fetchThreatLogs();
+                fetchThreatLogs(); // Fetch updated threats
             } else {
                 alert("Scan failed: " + data.message);
             }
@@ -29,7 +28,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function displayResults(scanData) {
-        scanResultsTable.innerHTML = "";
+        scanResultsTable.innerHTML = ""; // Clear previous scan results
+
         scanData.forEach(entry => {
             entry.ports.forEach(portInfo => {
                 let row = `<tr>
@@ -43,76 +43,50 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-// Fetch threats and populate the table
-function fetchThreatLogs() {
-    fetch("/get_threat_logs")
-    .then(response => response.json())
-    .then(data => {
-        let tableBody = document.getElementById("threatLogTable");
-        tableBody.innerHTML = ""; // Clear existing data
+    function fetchThreatLogs() {
+        fetch("/get_threat_logs")
+        .then(response => response.json())
+        .then(data => {
+            let tableBody = document.querySelector("#threatLogs tbody");
+            tableBody.innerHTML = ""; // Clear previous threat logs
 
-        data.forEach(threat => {
-            let row = document.createElement("tr");
-
-            // Check if the IP is already blocked
-            let actionButton = `<button onclick="blockIP('${threat.host}')">Block</button>`;
-            if (threat.status === "Blocked") {
-                actionButton = `<button onclick="unblockIP('${threat.host}')">Unblock</button>`;
-            }
-
-            row.innerHTML = `
-                <td>${new Date(threat.timestamp).toLocaleString()}</td>
-                <td>${threat.host}</td>
-                <td>${threat.port}</td>
-                <td>${threat.service}</td>
-                <td>${threat.status}</td>
-                <td>${actionButton}</td> <!-- Block/Unblock Button -->
-            `;
-
-            tableBody.appendChild(row);
+            data.forEach(threat => {
+                let row = `
+                    <tr>
+                        <td>${formatTimestamp(threat.timestamp)}</td>
+                        <td>${threat.host}</td>
+                        <td>${threat.port}</td>
+                        <td>${threat.service}</td>
+                        <td>${threat.status}</td>
+                        <td>
+                            <form method="POST" action="/toggle_ip_block">
+                                <input type="hidden" name="ip" value="${threat.host}">
+                                <button type="submit" class="block-btn">
+                                    ${threat.status === "Blocked" ? "Unblock" : "Block"}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
         });
-    });
-}
+    }
 
-// Block IP function
-function blockIP(ip) {
-    fetch("/block_ip", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `ip=${ip}`
-    }).then(response => response.json()).then(data => {
-        alert(data.message);
-        fetchThreatLogs(); // Refresh the table
-    });
-}
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return "N/A";  // Handle missing timestamps
 
-// Unblock IP function
-function unblockIP(ip) {
-    fetch("/unblock_ip", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `ip=${ip}`
-    }).then(response => response.json()).then(data => {
-        alert(data.message);
-        fetchThreatLogs(); // Refresh the table
-    });
-}
+        let date = new Date(timestamp);
+        return date.toLocaleString("en-GB", { 
+            year: "numeric", 
+            month: "short", 
+            day: "2-digit", 
+            hour: "2-digit", 
+            minute: "2-digit", 
+            second: "2-digit"
+        });
+    }
 
-// Load threat logs on page load
-document.addEventListener("DOMContentLoaded", fetchThreatLogs);
-
-//  Function to format the timestamp properly
-function formatTimestamp(timestamp) {
-    if (!timestamp) return "N/A";  // Handle missing timestamps
-
-    let date = new Date(timestamp);
-    return date.toLocaleString("en-GB", { 
-        year: "numeric", 
-        month: "short", 
-        day: "2-digit", 
-        hour: "2-digit", 
-        minute: "2-digit", 
-        second: "2-digit"
-    });
-   }
+    // Fetch threat logs on page load
+    fetchThreatLogs();
 });
