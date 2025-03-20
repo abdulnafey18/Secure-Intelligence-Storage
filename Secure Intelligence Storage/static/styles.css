@@ -223,6 +223,15 @@ color: #fff;
     text-decoration: underline;
 }
 
+/* Limit table height and enable scrolling inside */
+.table-container {
+    max-height: 450px;
+    overflow-y: auto;   /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal overflow */ 
+    margin: 20px auto; 
+    width: 100%;
+    max-width: 1300px;
+}
 table {
     width: 80%;
     max-width: 1000px;
