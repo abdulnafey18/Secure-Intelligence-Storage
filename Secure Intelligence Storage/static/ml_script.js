@@ -8,7 +8,13 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch("/get_file_anomalies")
             .then(response => response.json())
             .then(data => {
-                anomalyTable.innerHTML = ""; // Clear previous
+                anomalyTable.innerHTML = "";
+
+                if (!Array.isArray(data)) {
+                    console.error("Backend returned error:", data.error || data);
+                    anomalyTable.innerHTML = "<tr><td colspan='5'> Server error. Check console.</td></tr>";
+                    return;
+                }
 
                 if (data.length === 0) {
                     anomalyTable.innerHTML = "<tr><td colspan='5'>No anomalies detected</td></tr>";

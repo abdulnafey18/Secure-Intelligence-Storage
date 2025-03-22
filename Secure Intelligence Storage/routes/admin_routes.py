@@ -88,4 +88,5 @@ def admin_routes(app):
             return jsonify(results)
 
         except Exception as e:
+            print("[ERROR in /get_file_anomalies]:", str(e))
             return jsonify({"error": str(e)}), 500
