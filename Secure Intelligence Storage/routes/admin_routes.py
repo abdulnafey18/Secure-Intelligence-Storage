@@ -1,4 +1,4 @@
-import os, joblib
+import os, joblib, re
 import pandas as pd
 from flask import request, jsonify, redirect, url_for, flash
 from security.nmap_scanner import scan_network
@@ -71,13 +71,43 @@ def admin_routes(app):
     @app.route("/get_file_anomalies", methods=["GET"])
     def get_file_anomalies():
         try:
+            # Load model + encoders
             base_dir = os.path.join(os.path.dirname(__file__), "..", "security")
-            df = pd.read_csv(os.path.join(base_dir, "structured_logs.csv"))
             model = joblib.load(os.path.join(base_dir, "file_anomaly_model.pkl"))
             le_user = joblib.load(os.path.join(base_dir, "le_user.pkl"))
             le_action = joblib.load(os.path.join(base_dir, "le_action.pkl"))
 
-            df.dropna(inplace=True)
+            # Fetch last 100 file activity logs
+            raw_logs = list(db.logs.find({"type": "INFO"}).sort("timestamp", -1).limit(100))
+
+            data = []
+            for log in raw_logs:
+                msg = log["message"]
+                timestamp = log["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+
+                # Match upload/download/shared formats
+                upload = re.match(r"User (.*?) uploaded file: (.+)", msg)
+                download = re.match(r"User (.*?) downloaded file: (.+)", msg)
+                shared = re.match(r"User (.*?) shared file: (.+?) with (.+)", msg)
+                download_shared = re.match(r"User (.*?) downloaded shared file: (.+)", msg)
+
+                if upload:
+                    user, file = upload.groups()
+                    data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": ""})
+                elif download:
+                    user, file = download.groups()
+                    data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": ""})
+                elif shared:
+                    user, file, recipient = shared.groups()
+                    data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient})
+                elif download_shared:
+                    user, file = download_shared.groups()
+                    data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": ""})
+
+            if not data:
+                return jsonify([])
+
+            df = pd.DataFrame(data)
             df['user_encoded'] = le_user.transform(df['user'].fillna('unknown'))
             df['action_encoded'] = le_action.transform(df['action'].fillna('unknown'))
 
@@ -88,5 +118,5 @@ def admin_routes(app):
             return jsonify(results)
 
         except Exception as e:
-            print("[ERROR in /get_file_anomalies]:", str(e))
+            print("[ERROR in Mongo-based anomaly detection]:", str(e))
             return jsonify({"error": str(e)}), 500
