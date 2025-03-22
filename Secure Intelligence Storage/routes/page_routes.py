@@ -82,4 +82,8 @@ def page_routes(app):
     @app.route('/nmap_scanner')
     def nmap_scanner():
         return render_template('nmap_scanner.html')
+    # Route to show ML detection page
+    @app.route('/ml_detection')
+    def ml_detection():
+        return render_template('ml_detection.html')
     
