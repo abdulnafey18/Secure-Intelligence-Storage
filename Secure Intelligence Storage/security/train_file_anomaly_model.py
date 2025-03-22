@@ -2,8 +2,10 @@ import os
 import pandas as pd
 import joblib
 import re
+import sys
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from database.mongo_db import db  # your existing connection
 
 # Get current script directory
