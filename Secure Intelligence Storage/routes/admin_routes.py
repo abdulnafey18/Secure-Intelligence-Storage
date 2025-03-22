@@ -1,4 +1,5 @@
-import os
+import os, joblib
+import pandas as pd
 from flask import request, jsonify, redirect, url_for, flash
 from security.nmap_scanner import scan_network
 from database.mongo_db import db  # Import MongoDB connection
@@ -66,3 +67,25 @@ def admin_routes(app):
             flash(f"IP {ip} has been blocked!", "success")
 
         return redirect(url_for('nmap_scanner'))
+    
+    @app.route("/get_file_anomalies", methods=["GET"])
+    def get_file_anomalies():
+        try:
+            base_dir = os.path.join(os.path.dirname(__file__), "..", "security")
+            df = pd.read_csv(os.path.join(base_dir, "structured_logs.csv"))
+            model = joblib.load(os.path.join(base_dir, "file_anomaly_model.pkl"))
+            le_user = joblib.load(os.path.join(base_dir, "le_user.pkl"))
+            le_action = joblib.load(os.path.join(base_dir, "le_action.pkl"))
+
+            df.dropna(inplace=True)
+            df['user_encoded'] = le_user.transform(df['user'].fillna('unknown'))
+            df['action_encoded'] = le_action.transform(df['action'].fillna('unknown'))
+
+            df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded']])
+            anomalies = df[df['anomaly'] == -1]
+
+            results = anomalies[['timestamp', 'user', 'action', 'file_name', 'recipient']].to_dict(orient='records')
+            return jsonify(results)
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

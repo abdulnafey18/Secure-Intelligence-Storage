@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anomaly Detection</title>
+    <script src="{{ url_for('static', filename='ml_script.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Secure Intelligence Storage</h1>
+        <h2>Anomaly Detection (Machine Learning)</h2>
+        <nav class="nav1">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        
+        <nav class="nav2">
+        <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
+        <a href="{{ url_for('upload_file') }}">Upload Files</a>
+        <a href="{{ url_for('files') }}">View Files</a>
+        <a href="{{ url_for('share') }}">Share Files</a>
+        <a href="{{ url_for('received_files') }}">Received Files</a>
+        </nav>
+    </header>
+    <main>
+        <section class="anomaly-detector">
+            <div class="scan-button-container">
+                <button id="anomalyButton" type="submit">Check Anomalies</button>
+            </div>
+    
+            <h3>Detected File Anomalies</h3>
+            <table id="anomalyTable">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>File Name</th>
+                        <th>Recipient</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>
