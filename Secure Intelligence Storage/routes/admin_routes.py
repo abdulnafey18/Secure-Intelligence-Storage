@@ -71,21 +71,31 @@ def admin_routes(app):
     @app.route("/get_file_anomalies", methods=["GET"])
     def get_file_anomalies():
         try:
+            import ipaddress
+
             # Load model + encoders
             base_dir = os.path.join(os.path.dirname(__file__), "..", "security")
             model = joblib.load(os.path.join(base_dir, "file_anomaly_model.pkl"))
             le_user = joblib.load(os.path.join(base_dir, "le_user.pkl"))
             le_action = joblib.load(os.path.join(base_dir, "le_action.pkl"))
 
-            # Fetch last 100 file activity logs
+            # Fetch logs
             raw_logs = list(db.logs.find({"type": "INFO"}).sort("timestamp", -1).limit(100))
 
             data = []
             for log in raw_logs:
                 msg = log["message"]
-                timestamp = log["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+                timestamp_obj = log["timestamp"]
+                timestamp = timestamp_obj.strftime("%Y-%m-%d %H:%M:%S")
+                hour = timestamp_obj.hour
+                file_size = log.get("file_size", 0)
+                ip_raw = log.get("ip", "0.0.0.0")
 
-                # Match upload/download/shared formats
+                try:
+                    ip_encoded = int(ipaddress.IPv4Address(ip_raw))
+                except:
+                    ip_encoded = 0
+
                 upload = re.match(r"User (.*?) uploaded file: (.+)", msg)
                 download = re.match(r"User (.*?) downloaded file: (.+)", msg)
                 shared = re.match(r"User (.*?) shared file: (.+?) with (.+)", msg)
@@ -93,16 +103,16 @@ def admin_routes(app):
 
                 if upload:
                     user, file = upload.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": ""})
+                    data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
                 elif download:
                     user, file = download.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": ""})
+                    data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
                 elif shared:
                     user, file, recipient = shared.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient})
+                    data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
                 elif download_shared:
                     user, file = download_shared.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": ""})
+                    data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
 
             if not data:
                 return jsonify([])
@@ -111,7 +121,7 @@ def admin_routes(app):
             df['user_encoded'] = le_user.transform(df['user'].fillna('unknown'))
             df['action_encoded'] = le_action.transform(df['action'].fillna('unknown'))
 
-            df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded']])
+            df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']])
             anomalies = df[df['anomaly'] == -1]
 
             results = anomalies[['timestamp', 'user', 'action', 'file_name', 'recipient']].to_dict(orient='records')

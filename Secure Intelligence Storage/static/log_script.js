@@ -13,6 +13,8 @@ function fetchLogs() {
                 let row = `<tr>
                     <td>${log.timestamp}</td>
                     <td>${log.message}</td>
+                    <td>${log.ip || '-'}</td>
+                    <td>${log.file_size || '-'}</td>
                 </tr>`;
                 logDisplay.insertAdjacentHTML("beforeend", row);  
             });

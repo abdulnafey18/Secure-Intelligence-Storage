@@ -89,6 +89,8 @@ def file_routes(app):
 
                 # Read the file data and encrypt it using AES
                 file_data = file.read()
+                file_size = len(file_data)
+                ip = request.remote_addr
                 key = hashlib.sha256(file_password.encode()).digest()
                 cipher = AES.new(key, AES.MODE_CBC)
                 encrypted_data = cipher.iv + cipher.encrypt(pad(file_data, AES.block_size))
@@ -107,7 +109,7 @@ def file_routes(app):
                 })
 
                 # Log the file upload
-                add_log("INFO", f"User {session['email']} uploaded file: {filename}")
+                add_log("INFO", f"User {session['email']} uploaded file: {filename}", ip=ip, file_size=file_size)
 
                 flash('File uploaded and encrypted successfully!', 'success')
                 return redirect(url_for('files'))
@@ -147,6 +149,8 @@ def file_routes(app):
             bucket = client.bucket(GCS_BUCKET_NAME)
             blob = bucket.blob(filename)
             encrypted_data = blob.download_as_bytes()
+            file_size = len(encrypted_data)
+            ip = request.remote_addr
 
             # Decrypt the file data using AES
             key = hashlib.sha256(file_password.encode()).digest()
@@ -155,7 +159,7 @@ def file_routes(app):
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
 
             # Log successful file download
-            add_log("INFO", f"User {session['email']} downloaded file: {filename}")
+            add_log("INFO", f"User {session['email']} downloaded file: {filename}", ip=ip, file_size=file_size)
 
             # Send the decrypted file to the user for download
             return send_file(
@@ -273,6 +277,8 @@ def file_routes(app):
                 new_filename = f"shared_{filename}"
                 new_blob = bucket.blob(new_filename)
                 new_blob.upload_from_string(new_encrypted_data)
+                ip = request.remote_addr
+                file_size = len(new_encrypted_data)
 
                 print(f"Sender key: {sender_key.hex()}")
                 print(f"Recipient key (Encryption): {recipient_key.hex()}")
@@ -288,7 +294,7 @@ def file_routes(app):
                 })
 
                 # Log file sharing
-                add_log("INFO", f"User {session['email']} shared file: {filename} with {recipient_email}")
+                add_log("INFO", f"User {session['email']} shared file: {filename} with {recipient_email}", ip=ip, file_size=file_size)
 
 
                 flash(f'File shared successfully with {recipient_email}.', 'success')
@@ -350,6 +356,8 @@ def file_routes(app):
             bucket = client.bucket(GCS_BUCKET_NAME)
             blob = bucket.blob(filename)
             encrypted_data = blob.download_as_bytes()
+            file_size = len(encrypted_data)
+            ip = request.remote_addr
 
             # Decrypt the file
             cipher = AES.new(recipient_key, AES.MODE_CBC, iv)
@@ -362,7 +370,7 @@ def file_routes(app):
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
 
             # Log successful shared file download
-            add_log("INFO", f"User {session['email']} downloaded shared file: {filename}")
+            add_log("INFO", f"User {session['email']} downloaded shared file: {filename}", ip=ip, file_size=file_size)
 
             return send_file(
                 io.BytesIO(decrypted_data),
@@ -388,7 +396,8 @@ def file_routes(app):
             db.shared_files.delete_one({'_id': ObjectId(file_id), 'recipient_email': user_email})
             
             # Log the deletion of a received shared file
-            add_log("INFO", f"User {session['email']} deleted received file: {file_id}")
+            ip = request.remote_addr
+            add_log("INFO", f"User {session['email']} deleted received file: {file_id}", ip=ip)
 
             flash('Received file deleted successfully!', 'success')
             return redirect(url_for('received_files'))
@@ -439,11 +448,13 @@ def file_routes(app):
                 
                 blob.delete()
 
+                ip = request.remote_addr
+                file_size = blob.size if blob and blob.size else 0
                 # Remove the file metadata from MongoDB
                 db.files.delete_one({'filename': filename})  
 
                 # Log the deletion of an uploaded file
-                add_log("INFO", f"User {session['email']} deleted file: {filename}")
+                add_log("INFO", f"User {session['email']} deleted file: {filename}", ip=ip, file_size=file_size)
 
                 flash(f'File {filename} deleted successfully from GCS and database!', 'success')
             except Exception as e:
