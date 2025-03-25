@@ -1,4 +1,4 @@
-import os, joblib, re
+import os, joblib, re, ipaddress
 import pandas as pd
 from flask import request, jsonify, redirect, url_for, flash
 from security.nmap_scanner import scan_network
@@ -71,7 +71,6 @@ def admin_routes(app):
     @app.route("/get_file_anomalies", methods=["GET"])
     def get_file_anomalies():
         try:
-            import ipaddress
 
             # Load model + encoders
             base_dir = os.path.join(os.path.dirname(__file__), "..", "security")
