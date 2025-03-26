@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const scanButton = document.getElementById("scanButton");
     const scanResultsTable = document.querySelector("#scanResults tbody");
     const threatLogsTable = document.querySelector("#threatLogs tbody");
-
+    // When the scan button is clicked
     scanButton.addEventListener("click", function () {
         console.log("Scan button clicked! Sending request...");
 
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Scan request failed. Check console.");
         });
     });
-
+    // Function to display scan results in the table
     function displayResults(scanData) {
         scanResultsTable.innerHTML = ""; // Clear previous scan results
 
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-
+    // Fetch and display updated threat logs from MongoDB
     function fetchThreatLogs() {
         fetch("/get_threat_logs")
         .then(response => response.json())
@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-
+    // Format ISO timestamps into readable local format
     function formatTimestamp(timestamp) {
         if (!timestamp) return "N/A";  // Handle missing timestamps
 

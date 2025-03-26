@@ -232,14 +232,14 @@ def scan_network(target=None, arguments="-p- -T4"):
             db.nmap_threats.insert_many(detected_threats)
             print(f"[INFO] {len(detected_threats)} threats detected and logged.")
 
-        detect_external_scans()  #  Detect brute forc
+        detect_external_scans()  #  Detect brute force
         detect_ddos()  # Detect DDoS attack
 
         return {
             "status": "success",
             "scan_results": scan_results,
             "threats": detected_threats,
-            "_id": str(inserted_id)  # Convert ObjectId to string before returning
+            "_id": str(inserted_id)  # Converting ObjectId to string before returning
         }
 
     except Exception as e:

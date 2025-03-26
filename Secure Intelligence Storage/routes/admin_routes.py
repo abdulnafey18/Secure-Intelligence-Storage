@@ -5,11 +5,12 @@ from security.nmap_scanner import scan_network
 from database.mongo_db import db  # Import MongoDB connection
 
 def admin_routes(app):
+    # Route for fetching application logs
     @app.route('/get_logs/<log_type>', methods=['GET'])
     def get_logs(log_type):
         logs = list(db.logs.find({"type": log_type}, {"_id": 0}))  # Fetch logs of selected type
         return jsonify(logs)
-    
+    # Route for triggering Nmap network vulnerability scan
     @app.route('/scan_network', methods=['POST'])
     def trigger_scan():
         print("[INFO] Scan request received!")
@@ -36,12 +37,12 @@ def admin_routes(app):
         except Exception as e:
             print(f"[ERROR] Exception in scan: {str(e)}")
             return jsonify({"status": "error", "message": str(e)}), 500
-
+    # Route for fetching threat detection logs
     @app.route('/get_threat_logs', methods=['GET'])
     def get_threat_logs():
         logs = list(db.nmap_threats.find({}, {"_id": 0}))  
         return jsonify(logs)
-
+    # Route to toggle IP block/unblock using iptables firewall
     @app.route('/toggle_ip_block', methods=['POST'])
     def toggle_ip_block():
         ip = request.form.get('ip')
@@ -67,7 +68,7 @@ def admin_routes(app):
             flash(f"IP {ip} has been blocked!", "success")
 
         return redirect(url_for('nmap_scanner'))
-    
+    # Route for detecting file activity anomalies using trained ML model
     @app.route("/get_file_anomalies", methods=["GET"])
     def get_file_anomalies():
         try:
@@ -94,7 +95,7 @@ def admin_routes(app):
                     ip_encoded = int(ipaddress.IPv4Address(ip_raw))
                 except:
                     ip_encoded = 0
-
+                # Parse logs to extract structured features
                 upload = re.match(r"User (.*?) uploaded file: (.+)", msg)
                 download = re.match(r"User (.*?) downloaded file: (.+)", msg)
                 shared = re.match(r"User (.*?) shared file: (.+?) with (.+)", msg)
@@ -115,14 +116,14 @@ def admin_routes(app):
 
             if not data:
                 return jsonify([])
-
+            # Create DataFrame and transform categorical data
             df = pd.DataFrame(data)
             df['user_encoded'] = le_user.transform(df['user'].fillna('unknown'))
             df['action_encoded'] = le_action.transform(df['action'].fillna('unknown'))
-
+            # Predict anomalies using the ML model
             df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']])
             anomalies = df[df['anomaly'] == -1]
-
+            # Send only anomalous logs back to the frontend
             results = anomalies[['timestamp', 'user', 'action', 'file_name', 'recipient']].to_dict(orient='records')
             return jsonify(results)
 

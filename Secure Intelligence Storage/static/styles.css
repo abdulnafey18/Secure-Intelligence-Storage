@@ -196,7 +196,6 @@ color: #fff;
     height: calc(100vh - 120px); 
 }
 
-
 .admin-tools {
     grid-area: admin-tools;
     color: #fff;
@@ -223,11 +222,10 @@ color: #fff;
     text-decoration: underline;
 }
 
-/* Limit table height and enable scrolling inside */
 .table-container {
     max-height: 450px;
-    overflow-y: auto;   /* Enable vertical scrolling */
-    overflow-x: hidden; /* Prevent horizontal overflow */ 
+    overflow-y: auto;   
+    overflow-x: hidden; 
     margin: 20px auto; 
     width: 100%;
     max-width: 1300px;
@@ -313,7 +311,6 @@ text-align: center;
     color: #ffffff;
     border-radius: 5px;
 }
-
 
 .user-management {
     grid-area: user-management;

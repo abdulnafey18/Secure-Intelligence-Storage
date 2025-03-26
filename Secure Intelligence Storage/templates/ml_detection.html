@@ -25,10 +25,11 @@
     </header>
     <main>
         <section class="anomaly-detector">
+            <!-- Button to trigger anomaly detection -->
             <div class="scan-button-container">
                 <button id="anomalyButton" type="submit">Check Anomalies</button>
             </div>
-    
+            <!-- Table to display detected anomalies -->
             <h3>Detected File Anomalies</h3>
             <table id="anomalyTable">
                 <thead>
@@ -40,7 +41,7 @@
                         <th>Recipient</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody></tbody> <!-- Rows will be inserted dynamically via JavaScript -->
             </table>
         </section>
     </main>

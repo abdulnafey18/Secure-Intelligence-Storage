@@ -26,10 +26,11 @@
 
     <main>
         <section class="nmap-scanner">
+            <!-- Scan trigger button -->
             <div class="scan-button-container">
                 <button id="scanButton" type="submit">Run Scan</button>
             </div>
-
+            <!-- Scan Results Table -->
             <h3>Scan Results</h3>
             <table id="scanResults">
                 <thead>
@@ -40,9 +41,9 @@
                         <th>Service</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody></tbody> <!-- Scan results will be dynamically inserted here -->
             </table>
-
+            <!-- Threat Logs Table -->
             <h3>Threat Logs</h3>
             <table id="threatLogs">
                 <thead>
@@ -56,6 +57,7 @@
                     </tr>
                 </thead>
                   <tbody>
+                    <!-- Loop through each threat log entry from backend and display -->
                     {% for threat in threat_logs %}
                     <tr>
                         <td>{{ threat.timestamp }}</td>
@@ -63,6 +65,7 @@
                         <td>{{ threat.port }}</td>
                         <td>{{ threat.service }}</td>
                         <td id="status-{{ threat.host }}">{{ threat.status }}</td>
+                        <!-- Block/Unblock IP action -->
                         <td>
                             <form method="POST" action="{{ url_for('toggle_ip_block') }}">
                                 <input type="hidden" name="ip" value="{{ threat.host }}">
