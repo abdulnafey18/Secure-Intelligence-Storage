@@ -1,5 +1,6 @@
 import os, joblib, re, ipaddress
 import pandas as pd
+import numpy as np
 from flask import request, jsonify, redirect, url_for, flash
 from security.nmap_scanner import scan_network
 from database.mongo_db import db  # Import MongoDB connection
@@ -118,8 +119,16 @@ def admin_routes(app):
                 return jsonify([])
             # Create DataFrame and transform categorical data
             df = pd.DataFrame(data)
-            df['user_encoded'] = le_user.transform(df['user'].fillna('unknown'))
-            df['action_encoded'] = le_action.transform(df['action'].fillna('unknown'))
+            # Handle unseen users/actions safely
+            df['user'] = df['user'].apply(lambda x: x if x in le_user.classes_ else 'unknown')
+            df['action'] = df['action'].apply(lambda x: x if x in le_action.classes_ else 'unknown')
+            if 'unknown' not in le_user.classes_:
+                le_user.classes_ = np.append(le_user.classes_, 'unknown')
+            if 'unknown' not in le_action.classes_:
+                le_action.classes_ = np.append(le_action.classes_, 'unknown')
+
+            df['user_encoded'] = le_user.transform(df['user'])
+            df['action_encoded'] = le_action.transform(df['action'])
             # Predict anomalies using the ML model
             df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']])
             anomalies = df[df['anomaly'] == -1]

@@ -95,6 +95,9 @@ def file_routes(app):
                 cipher = AES.new(key, AES.MODE_CBC)
                 encrypted_data = cipher.iv + cipher.encrypt(pad(file_data, AES.block_size))
 
+                print(f"Encryption Key (Upload): {key.hex()}")
+                print(f"IV during encryption: {cipher.iv.hex()}")
+                print(f"Encrypted data length: {len(encrypted_data)} bytes")
                 # Upload the encrypted file to Google Cloud Storage
                 client = storage.Client()
                 bucket = client.bucket(GCS_BUCKET_NAME)
@@ -157,7 +160,10 @@ def file_routes(app):
             iv = encrypted_data[:16] # Extract the initialization vector (IV)
             cipher = AES.new(key, AES.MODE_CBC, iv) 
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
-
+	    # After extracting IV and setting up cipher:
+            print(f"Decryption Key (Download): {key.hex()}")
+            print(f"IV during decryption: {iv.hex()}")
+            print(f"Encrypted data length: {len(encrypted_data)} bytes")
             # Log successful file download
             add_log("INFO", f"User {session['email']} downloaded file: {filename}", ip=ip, file_size=file_size)
 

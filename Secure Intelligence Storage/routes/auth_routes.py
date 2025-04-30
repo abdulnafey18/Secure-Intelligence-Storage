@@ -50,7 +50,7 @@ def auth_routes(app):
                 return redirect(url_for('register'))
 
             password_hash = generate_password_hash(password)  # Hash the password for secure storage
-
+            print(f"Password hash (Registration): {password_hash}")
             if find_user_by_email(email):
                 flash('Email is already registered.', 'error')
                 return redirect(url_for('register'))
@@ -73,6 +73,8 @@ def auth_routes(app):
 
             # Ensure user exists and password is correct
             if user and check_password_hash(user['password_hash'], password):  
+                print(f"Stored password hash: {user['password_hash']}")
+                print(f"Password match: {check_password_hash(user['password_hash'], password)}")
                 if 'mfa_secret' in user and user['mfa_secret']:  
                     try:
                         decrypted_mfa_secret = decrypt_secret(user['mfa_secret'])
