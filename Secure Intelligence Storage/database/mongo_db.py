@@ -1,9 +1,14 @@
 from pymongo import MongoClient  # Import MongoDB client for interacting with MongoDB.
 import os  # Import the `os` module for handling file paths and environment variables.
-from datetime import datetime  # Import datetime for timestamping logs.
+from datetime import datetime, timezone
+datetime.now(timezone.utc)
 
 # Connect to MongoDB
-client = MongoClient('mongodb://admin:ViSiOn%402020@localhost:27017/secure_intelligence_storage?authSource=admin')
+mongo_uri = os.getenv(
+    "MONGO_URI",
+    "mongodb://admin:ViSiOn%402020@localhost:27017/secure_intelligence_storage?authSource=admin"
+)
+client = MongoClient(mongo_uri)
 db = client['secure_intelligence_storage']
 
 # Define the folder path where uploaded files will be stored
@@ -20,7 +25,7 @@ def add_log(log_type, message, ip=None, file_size=None):
     log_entry = {
         "type": log_type,
         "message": message,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.now(timezone.utc)
     }
 
     if ip:
@@ -29,3 +34,6 @@ def add_log(log_type, message, ip=None, file_size=None):
         log_entry["file_size"] = file_size
 
     logs_collection.insert_one(log_entry)
+
+def close_client():
+    client.close()

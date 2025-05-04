@@ -16,20 +16,26 @@
         </nav>
         
         <nav class="nav2">
-        <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
-        <a href="{{ url_for('upload_file') }}">Upload Files</a>
-        <a href="{{ url_for('files') }}">View Files</a>
-        <a href="{{ url_for('share') }}">Share Files</a>
-        <a href="{{ url_for('received_files') }}">Received Files</a>
+            <a href="{{ url_for('dynamic_homepage') }}">Homepage</a>
+            <a href="{{ url_for('upload_file') }}">Upload Files</a>
+            <a href="{{ url_for('files') }}">View Files</a>
+            <a href="{{ url_for('share') }}">Share Files</a>
+            <a href="{{ url_for('received_files') }}">Received Files</a>
         </nav>
     </header>
+
     <main>
         <section class="anomaly-detector">
-            <!-- Button to trigger anomaly detection -->
             <div class="scan-button-container">
+                <!-- Button to check anomalies -->
                 <button id="anomalyButton" type="submit">Check Anomalies</button>
+
+                <!-- Button to generate PDF report -->
+                <form action="/generate_anomaly_report" method="GET" style="display:inline;">
+                    <button type="submit" id="generateReportButton" disabled class="pdf-btn">Generate Anomaly Report (PDF)</button>
+                </form>
             </div>
-            <!-- Table to display detected anomalies -->
+
             <h3>Detected File Anomalies</h3>
             <table id="anomalyTable">
                 <thead>
@@ -39,9 +45,10 @@
                         <th>Action</th>
                         <th>File Name</th>
                         <th>Recipient</th>
+                        <th>Suspicious Score</th>
                     </tr>
                 </thead>
-                <tbody></tbody> <!-- Rows will be inserted dynamically via JavaScript -->
+                <tbody></tbody>
             </table>
         </section>
     </main>

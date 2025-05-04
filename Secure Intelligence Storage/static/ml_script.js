@@ -1,26 +1,31 @@
 document.addEventListener("DOMContentLoaded", function () {
     const anomalyButton = document.getElementById("anomalyButton");
     const anomalyTable = document.querySelector("#anomalyTable tbody");
-    // Adding a click event listener to trigger anomaly detection
+    const reportButton = document.getElementById("generateReportButton");
+
     anomalyButton.addEventListener("click", function () {
         console.log("Checking for file anomalies...");
-        // Make a GET request to the server endpoint
         fetch("/get_file_anomalies")
             .then(response => response.json())
             .then(data => {
                 anomalyTable.innerHTML = "";
-                // Handle server errors (backend might return JSON error object)
+                reportButton.disabled = true;
+                reportButton.classList.remove("enabled");  // Remove enabled style
+
                 if (!Array.isArray(data)) {
                     console.error("Backend returned error:", data.error || data);
-                    anomalyTable.innerHTML = "<tr><td colspan='5'> Server error. Check console.</td></tr>";
+                    anomalyTable.innerHTML = "<tr><td colspan='6'>Server error. Check console.</td></tr>";
                     return;
                 }
-                // If no anomalies are detected, show a message
+
                 if (data.length === 0) {
-                    anomalyTable.innerHTML = "<tr><td colspan='5'>No anomalies detected</td></tr>";
+                    anomalyTable.innerHTML = "<tr><td colspan='6'>No anomalies detected</td></tr>";
                     return;
                 }
-                // Loop through each anomaly and create a new table row
+
+                reportButton.disabled = false;
+                reportButton.classList.add("enabled");  // Add enabled style (green)
+
                 data.forEach(entry => {
                     let row = `
                         <tr>
@@ -29,12 +34,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             <td>${entry.action}</td>
                             <td>${entry.file_name}</td>
                             <td>${entry.recipient || "-"}</td>
+                            <td>${entry.suspicious_score}</td>
                         </tr>`;
                     anomalyTable.innerHTML += row;
                 });
             })
             .catch(error => {
-                // Catch and log any network or fetch errors
                 console.error("Error fetching anomalies:", error);
                 alert("Failed to fetch anomalies.");
             });

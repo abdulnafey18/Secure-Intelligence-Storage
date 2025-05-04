@@ -3,7 +3,12 @@ from cryptography.fernet import Fernet  # Encryption
 import os  # Environment variable handling
 
 # Secure Paths Using Environment Variable
-KEY_FILE = "/home/ec2-user/Secure-Intelligence-Storage/Secure Intelligence Storage/database/encryption_key.key"
+KEY_FILE = os.getenv(
+    "KEY_FILE_PATH",
+    "/home/ec2-user/Secure-Intelligence-Storage/Secure Intelligence Storage/database/encryption_key.key"
+    if os.path.exists("/home/ec2-user/Secure-Intelligence-Storage/Secure Intelligence Storage/database/encryption_key.key")
+    else os.path.join(os.path.dirname(__file__), "encryption_key.key")
+)
 DB_PATH = os.getenv("DB_PATH", "/home/ec2-user/Secure-Intelligence-Storage/Secure Intelligence Storage/database/secure_intelligence_storage.db")
 
 # Load the encryption key securely
