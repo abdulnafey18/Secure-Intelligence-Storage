@@ -164,7 +164,9 @@ def admin_routes(app):
 
     @app.route("/generate_anomaly_report")
     def generate_anomaly_report():
-        # Fetch anomalies again
+        import ipaddress
+        from fpdf import FPDF
+
         base_dir = os.path.join(os.path.dirname(__file__), "..", "security")
         model = joblib.load(os.path.join(base_dir, "file_anomaly_model.pkl"))
         le_user = joblib.load(os.path.join(base_dir, "le_user.pkl"))
@@ -208,9 +210,20 @@ def admin_routes(app):
             return "No anomalies found."
 
         df = pd.DataFrame(data)
-        df['user_encoded'] = le_user.transform(df['user'].fillna('unknown'))
-        df['action_encoded'] = le_action.transform(df['action'].fillna('unknown'))
 
+        # Handle unseen user/action labels safely before encoding
+        df['user'] = df['user'].apply(lambda x: x if x in le_user.classes_ else 'unknown')
+        df['action'] = df['action'].apply(lambda x: x if x in le_action.classes_ else 'unknown')
+
+        if 'unknown' not in le_user.classes_:
+            le_user.classes_ = np.append(le_user.classes_, 'unknown')
+        if 'unknown' not in le_action.classes_:
+            le_action.classes_ = np.append(le_action.classes_, 'unknown')
+
+        df['user_encoded'] = le_user.transform(df['user'])
+        df['action_encoded'] = le_action.transform(df['action'])
+
+        # Predict anomalies
         df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']])
         anomalies = df[df['anomaly'] == -1]
 
@@ -223,7 +236,9 @@ def admin_routes(app):
         pdf.ln(10)
 
         for _, row in anomalies.iterrows():
-            pdf.cell(0, 10, txt=f"Time: {row['timestamp']} | User: {row['user']} | Action: {row['action']} | File: {row['file_name']} | Recipient: {row['recipient']}", ln=True)
+            pdf.multi_cell(0, 10, txt=f"Time: {row['timestamp']}\nUser: {row['user']}\nAction: {row['action']}\nFile: {row['file_name']}\nRecipient: {row['recipient']}\n---")
 
-        pdf.output("anomaly_report.pdf")
-        return send_file("anomaly_report.pdf", as_attachment=True)
+        pdf_file = os.path.join(base_dir, "anomaly_report.pdf")
+        pdf.output(pdf_file)
+
+        return send_file(pdf_file, as_attachment=True)

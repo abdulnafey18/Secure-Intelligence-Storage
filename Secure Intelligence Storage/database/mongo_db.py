@@ -21,7 +21,7 @@ shared_files = db['shared_files']
 logs_collection = db['logs']
 
 # Function to add logs to MongoDB
-def add_log(log_type, message, ip=None, file_size=None):
+def add_log(log_type, message, ip=None):
     log_entry = {
         "type": log_type,
         "message": message,
@@ -30,8 +30,6 @@ def add_log(log_type, message, ip=None, file_size=None):
 
     if ip:
         log_entry["ip"] = ip
-    if file_size is not None:
-        log_entry["file_size"] = file_size
 
     logs_collection.insert_one(log_entry)
 

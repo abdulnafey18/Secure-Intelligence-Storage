@@ -26,16 +26,14 @@
 
     <main>
         <section class="anomaly-detector">
-            <div class="scan-button-container">
-                <!-- Button to check anomalies -->
-                <button id="anomalyButton" type="submit">Check Anomalies</button>
-
-                <!-- Button to generate PDF report -->
-                <form action="/generate_anomaly_report" method="GET" style="display:inline;">
-                    <button type="submit" id="generateReportButton" disabled class="pdf-btn">Generate Anomaly Report (PDF)</button>
-                </form>
-            </div>
-
+<div class="scan-button-container">
+<div class="button-group">
+        <button id="anomalyButton" type="submit">Check Anomalies</button>
+        <form action="/generate_anomaly_report" method="GET" style="display:inline;">
+            <button type="submit" id="generateReportButton" disabled class="pdf-btn">Generate Anomaly Report (PDF)</button>
+        </form>
+    </div>
+</div>
             <h3>Detected File Anomalies</h3>
             <table id="anomalyTable">
                 <thead>
@@ -44,7 +42,6 @@
                         <th>User</th>
                         <th>Action</th>
                         <th>File Name</th>
-                        <th>Recipient</th>
                         <th>Suspicious Score</th>
                     </tr>
                 </thead>

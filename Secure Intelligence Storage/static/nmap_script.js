@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 let row = `<tr>
                     <td>${entry.host}</td>
                     <td>${portInfo.port}</td>
+                    <td>${portInfo.protocol}</td>
                     <td>${portInfo.state}</td>
                     <td>${portInfo.service}</td>
                 </tr>`;

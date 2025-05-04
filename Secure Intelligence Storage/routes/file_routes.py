@@ -112,7 +112,7 @@ def file_routes(app):
                 })
 
                 # Log the file upload
-                add_log("INFO", f"User {session['email']} uploaded file: {filename}", ip=ip, file_size=file_size)
+                add_log("INFO", f"User {session['email']} uploaded file: {filename}", ip=ip)
 
                 flash('File uploaded and encrypted successfully!', 'success')
                 return redirect(url_for('files'))
@@ -165,7 +165,7 @@ def file_routes(app):
             print(f"IV during decryption: {iv.hex()}")
             print(f"Encrypted data length: {len(encrypted_data)} bytes")
             # Log successful file download
-            add_log("INFO", f"User {session['email']} downloaded file: {filename}", ip=ip, file_size=file_size)
+            add_log("INFO", f"User {session['email']} downloaded file: {filename}", ip=ip)
 
             # Send the decrypted file to the user for download
             return send_file(
@@ -300,7 +300,7 @@ def file_routes(app):
                 })
 
                 # Log file sharing
-                add_log("INFO", f"User {session['email']} shared file: {filename} with {recipient_email}", ip=ip, file_size=file_size)
+                add_log("INFO", f"User {session['email']} shared file: {filename} with {recipient_email}", ip=ip)
 
 
                 flash(f'File shared successfully with {recipient_email}.', 'success')
@@ -376,7 +376,7 @@ def file_routes(app):
             decrypted_data = unpad(cipher.decrypt(encrypted_data[16:]), AES.block_size)
 
             # Log successful shared file download
-            add_log("INFO", f"User {session['email']} downloaded shared file: {filename}", ip=ip, file_size=file_size)
+            add_log("INFO", f"User {session['email']} downloaded shared file: {filename}", ip=ip)
 
             return send_file(
                 io.BytesIO(decrypted_data),
@@ -460,7 +460,7 @@ def file_routes(app):
                 db.files.delete_one({'filename': filename})  
 
                 # Log the deletion of an uploaded file
-                add_log("INFO", f"User {session['email']} deleted file: {filename}", ip=ip, file_size=file_size)
+                add_log("INFO", f"User {session['email']} deleted file: {filename}", ip=ip)
 
                 flash(f'File {filename} deleted successfully from GCS and database!', 'success')
             except Exception as e:

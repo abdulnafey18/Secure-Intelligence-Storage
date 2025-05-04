@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             <td>${entry.user}</td>
                             <td>${entry.action}</td>
                             <td>${entry.file_name}</td>
-                            <td>${entry.recipient || "-"}</td>
                             <td>${entry.suspicious_score}</td>
                         </tr>`;
                     anomalyTable.innerHTML += row;

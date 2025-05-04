@@ -62,7 +62,6 @@ def auth_routes(app):
         return render_template('register_menu.html')
     # Login route to authenticate the user with email, password, and MFA
     @app.route('/login', methods=['GET', 'POST'])
-    @app.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
             email = request.form['email']
@@ -93,7 +92,8 @@ def auth_routes(app):
                             flash('Invalid or missing OTP. Please try again.', 'error')
                             
                             # Log failed MFA attempt
-                            add_log("WARNING", f"Failed MFA attempt for {email}: Incorrect OTP entered")
+                            ip = request.remote_addr                
+                            add_log("WARNING", f"Failed MFA attempt for {email}: Incorrect OTP entered", ip=ip)
 
                             return redirect(url_for('login'))
 
@@ -102,6 +102,7 @@ def auth_routes(app):
                         return redirect(url_for('login'))
 
                 # Save user session and redirect
+                session.permanent = True
                 session['email'] = user['email']
                 session['role'] = user['role']
 
@@ -114,7 +115,8 @@ def auth_routes(app):
                 flash('Invalid credentials.', 'error')
 
                 # Log failed login due to incorrect password
-                add_log("WARNING", f"Failed login attempt for {email}: Incorrect password")
+                ip = request.remote_addr
+                add_log("WARNING", f"Failed login attempt for {email}: Incorrect password", ip=ip)
 
                 return redirect(url_for('login'))
 
