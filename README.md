@@ -1,6 +1,20 @@
 # Secure-Intelligence-Storage
 
+
+###To Access Mongodb Database Inside Docker In AWS###
+
+
+sudo docker exec -it mongodb bash
+
+mongosh -u admin -p ViSiOn@2020 --authenticationDatabase admin
+
+use secure_intelligence_storage
+
+show collections
+
+
 ###For Intrusion Detection###
+
 
 To simulate brute force attack run on Machine terminal "nmap --script ssh-brute -p 22 <Ec2 IP>"
 
