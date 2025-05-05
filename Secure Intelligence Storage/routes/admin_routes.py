@@ -1,11 +1,11 @@
 import os, joblib, re, ipaddress
 import pandas as pd
 import numpy as np
-from flask import request, jsonify, redirect, url_for, flash
+from flask import request, jsonify, redirect, url_for, flash, send_file
 from security.nmap_scanner import scan_network
 from database.mongo_db import db  # Import MongoDB connection
 from fpdf import FPDF
-from flask import send_file
+from datetime import datetime
 
 def admin_routes(app):
     # Route for fetching application logs
@@ -195,23 +195,22 @@ def admin_routes(app):
 
             if upload:
                 user, file = upload.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
             elif download:
                 user, file = download.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
             elif shared:
                 user, file, recipient = shared.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
             elif download_shared:
                 user, file = download_shared.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
 
         if not data:
             return "No anomalies found."
 
         df = pd.DataFrame(data)
 
-        # Handle unseen user/action labels safely before encoding
         df['user'] = df['user'].apply(lambda x: x if x in le_user.classes_ else 'unknown')
         df['action'] = df['action'].apply(lambda x: x if x in le_action.classes_ else 'unknown')
 
@@ -223,20 +222,57 @@ def admin_routes(app):
         df['user_encoded'] = le_user.transform(df['user'])
         df['action_encoded'] = le_action.transform(df['action'])
 
-        # Predict anomalies
         df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']])
         anomalies = df[df['anomaly'] == -1]
 
-        # Generate PDF
+        def calculate_suspicious_score(row):
+            score = 0
+            if row['action'] in ["DownloadShared", "Share"]:
+                score += 2
+            if row['hour'] < 9 or row['hour'] > 18:
+                score += 2
+            if row['ip_encoded'] not in [int(ipaddress.IPv4Address("127.0.0.1"))]:
+                score += 3
+            if row['file_size'] > 10000000 or row['file_size'] < 10000:
+                score += 1
+            return score
+
+        anomalies['suspicious_score'] = anomalies.apply(calculate_suspicious_score, axis=1)
+
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", size=12)
 
-        pdf.cell(200, 10, txt="Anomaly Detection Report", ln=True, align='C')
-        pdf.ln(10)
+        # Title
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(0, 12, "Secure Intelligence Storage", ln=True, align='C')
+        pdf.set_font("Arial", '', 12)
+        pdf.cell(0, 10, "Anomaly Detection Report", ln=True, align='C')
+        pdf.cell(0, 10, f"Generated On: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align='C')
+        pdf.ln(6)
+
+        # Table header
+        pdf.set_fill_color(200, 220, 255)
+        pdf.set_font("Arial", 'B', 10)
+
+        col_widths = [35, 40, 20, 60, 15]
+        headers = ["Timestamp", "User", "Action", "File", "Score"]
+
+        for i, header in enumerate(headers):
+            pdf.cell(col_widths[i], 8, header, 1, 0, 'C', True)
+        pdf.ln()
+
+        # Table rows
+        pdf.set_font("Arial", '', 9)
 
         for _, row in anomalies.iterrows():
-            pdf.multi_cell(0, 10, txt=f"Time: {row['timestamp']}\nUser: {row['user']}\nAction: {row['action']}\nFile: {row['file_name']}\nRecipient: {row['recipient']}\n---")
+            pdf.cell(col_widths[0], 8, row['timestamp'], 1)
+            user_display = row['user'][:18] + "..." if len(row['user']) > 18 else row['user']
+            pdf.cell(col_widths[1], 8, user_display, 1)
+            pdf.cell(col_widths[2], 8, row['action'], 1)
+            file_display = row['file_name'][:35] + "..." if len(row['file_name']) > 35 else row['file_name']
+            pdf.cell(col_widths[3], 8, file_display, 1)
+            pdf.cell(col_widths[4], 8, str(row['suspicious_score']), 1)
+            pdf.ln()
 
         pdf_file = os.path.join(base_dir, "anomaly_report.pdf")
         pdf.output(pdf_file)
