@@ -1,9 +1,10 @@
-import os
+import os, sys
 os.environ["MONGO_URI"] = "mongodb://localhost:27017/"
 import unittest
 from database import mongo_db
 from datetime import datetime, timezone
 datetime.now(timezone.utc)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 class TestMongoDB(unittest.TestCase):
 
