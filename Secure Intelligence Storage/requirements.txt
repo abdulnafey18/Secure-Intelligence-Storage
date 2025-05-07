@@ -1,0 +1,9 @@
+Flask
+flask-talisman
+pymongo
+google-cloud-storage
+python-nmap
+pyotp
+cryptography
+scikit-learn
+numpy

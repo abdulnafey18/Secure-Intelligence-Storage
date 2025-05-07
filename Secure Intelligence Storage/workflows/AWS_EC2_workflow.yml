@@ -1,0 +1,35 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH Key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          echo "${SSH_PRIVATE_KEY}" > key.pem
+          chmod 600 key.pem
+
+      - name: Test SSH Connection
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@16.16.79.125 "echo Connected Successfully!"
+
+      - name: Deploy latest code to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@16.16.79.125 << 'EOF'
+            cd /home/ec2-user/Secure-Intelligence-Storage
+            git pull origin main
+          EOF
+
+      - name: Clean up
+        run: rm key.pem
