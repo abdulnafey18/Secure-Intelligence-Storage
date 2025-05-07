@@ -1,9 +1,8 @@
-import os, sys
+import os
 os.environ["DB_PATH"] = "tests/test_auth.db"
 os.environ["KEY_FILE_PATH"] = "tests/test_key.key"
 from database import sql_db
 import unittest
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 class TestSQLDatabase(unittest.TestCase):
 
