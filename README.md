@@ -29,6 +29,7 @@ A secure cloud-based file storage and sharing platform with cybersecurity as its
 13) JavaScript (JS) - Adds interactivity and handles user actions on frontend web pages
 
 ## Setup and Deployment
+Note: This application is intended to be deployed on an AWS EC2 instance running Linux (Amazon Linux or Ubuntu recommended). Ensure Docker and Python 3 are installed.
 1) Clone the repo
 git clone https://github.com/abdulnafey18/Secure-Intelligence-Storage.git
 cd Secure-Intelligence-Storage
