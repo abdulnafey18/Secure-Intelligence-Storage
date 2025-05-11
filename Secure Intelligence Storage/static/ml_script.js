@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(data => {
                 anomalyTable.innerHTML = "";
                 reportButton.disabled = true;
-                reportButton.classList.remove("enabled");  // Remove enabled style
+                reportButton.classList.remove("enabled");  
 
                 if (!Array.isArray(data)) {
                     console.error("Backend returned error:", data.error || data);
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 reportButton.disabled = false;
-                reportButton.classList.add("enabled");  // Add enabled style (green)
+                reportButton.classList.add("enabled");  
 
                 data.forEach(entry => {
                     let row = `

@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from flask import request, jsonify, redirect, url_for, flash, send_file
 from security.nmap_scanner import scan_network
-from database.mongo_db import db  # Import MongoDB connection
+from database.mongo_db import db 
 from security.suspicious_score import calculate_suspicious_score
 from fpdf import FPDF
 from datetime import datetime
@@ -149,9 +149,10 @@ def admin_routes(app):
         except Exception as e:
             print("[ERROR in Mongo-based anomaly detection]:", str(e))
             return jsonify({"error": str(e)}), 500
-
+    # Route to generate and download a PDF report of file anomalies
     @app.route("/generate_anomaly_report")
     def generate_anomaly_report():
+        # Loading ML model and encoders from the security directory
         base_dir = os.path.join(os.path.dirname(__file__), "..", "security")
         model = joblib.load(os.path.join(base_dir, "file_anomaly_model.pkl"))
         le_user = joblib.load(os.path.join(base_dir, "le_user.pkl"))
@@ -161,22 +162,24 @@ def admin_routes(app):
 
         data = []
         for log in raw_logs:
+            # Extracting key fields from each log
             msg = log["message"]
             timestamp_obj = log["timestamp"]
             timestamp = timestamp_obj.strftime("%Y-%m-%d %H:%M:%S")
             hour = timestamp_obj.hour
             file_size = log.get("file_size", 0)
             ip_raw = log.get("ip", "0.0.0.0")
+            # Converting IP to integer format for analysis
             try:
                 ip_encoded = int(ipaddress.IPv4Address(ip_raw))
             except:
                 ip_encoded = 0
-
+            # Parsing log message to extract user action
             upload = re.match(r"User (.*?) uploaded file: (.+)", msg)
             download = re.match(r"User (.*?) downloaded file: (.+)", msg)
             shared = re.match(r"User (.*?) shared file: (.+?) with (.+)", msg)
             download_shared = re.match(r"User (.*?) downloaded shared file: (.+)", msg)
-
+            # Categorizing action and structure data row accordingly
             if upload:
                 user, file = upload.groups()
                 data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
@@ -200,13 +203,15 @@ def admin_routes(app):
             le_user.classes_ = np.append(le_user.classes_, 'unknown')
         if 'unknown' not in le_action.classes_:
             le_action.classes_ = np.append(le_action.classes_, 'unknown')
-
+        # Encoding categorical values
         df['user_encoded'] = le_user.transform(df['user'])
         df['action_encoded'] = le_action.transform(df['action'])
+        # Applying anomaly detection model
         df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']])
         anomalies = df[df['anomaly'] == -1]
+        # Calculating custom suspicious score for each anomaly
         anomalies['suspicious_score'] = anomalies.apply(calculate_suspicious_score, axis=1)
-
+        # Generating PDF report
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", 'B', 16)
@@ -223,7 +228,7 @@ def admin_routes(app):
         pdf.set_fill_color(200, 220, 255)
         pdf.set_font("Arial", 'B', 9)
 
-        # Render headers
+        # Rendering headers
         for i, header in enumerate(headers):
             pdf.cell(col_widths[i], row_height + 2, header, 1, 0, 'C', True)
         pdf.ln()
@@ -244,7 +249,7 @@ def admin_routes(app):
             y_start = pdf.get_y()
             max_y = y_start
 
-            # Track height of each cell rendered
+            # Tracking height of each cell rendered
             heights = []
             for i, cell in enumerate(row_data):
                 pdf.set_xy(x_start + sum(col_widths[:i]), y_start)

@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Scan Response Data:", data);
             if (data.status === "success") {
                 displayResults(data.results);
-                fetchThreatLogs(); // Fetch updated threats
+                fetchThreatLogs(); 
             } else {
                 alert("Scan failed: " + data.message);
             }
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     // Function to display scan results in the table
     function displayResults(scanData) {
-        scanResultsTable.innerHTML = ""; // Clear previous scan results
+        scanResultsTable.innerHTML = ""; 
 
         scanData.forEach(entry => {
             entry.ports.forEach(portInfo => {
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             let tableBody = document.querySelector("#threatLogs tbody");
-            tableBody.innerHTML = ""; // Clear previous threat logs
+            tableBody.innerHTML = ""; 
 
             data.forEach(threat => {
                 let row = `
@@ -73,9 +73,9 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // Format ISO timestamps into readable local format
+    // Formatting ISO timestamps into readable local format
     function formatTimestamp(timestamp) {
-        if (!timestamp) return "N/A";  // Handle missing timestamps
+        if (!timestamp) return "N/A"; 
 
         let date = new Date(timestamp);
         return date.toLocaleString("en-GB", { 
@@ -88,6 +88,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Fetch threat logs on page load
+    // Fetching threat logs on page load
     fetchThreatLogs();
 });

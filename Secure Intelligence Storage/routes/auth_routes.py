@@ -127,7 +127,7 @@ def auth_routes(app):
         session.clear()
         flash('Logged out successfully.', 'success')
         return redirect(url_for('homepage'))
-    # Admin-only route that allows an admin to delete a user
+    # Admin only route that allows an admin to delete a user
     @app.route('/delete_user/<int:user_id>', methods=['POST'])
     def delete_user(user_id):
         if 'role' in session and session['role'] == 'admin':

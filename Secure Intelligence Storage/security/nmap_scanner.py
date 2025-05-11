@@ -7,13 +7,13 @@ from flask import request
 from database.mongo_db import db
 from bson import ObjectId
 
-# Set of whitelisted IPs (To be updated dynamically)
+# Set of whitelisted IPs that gets updated dynamically
 WHITELISTED_IPS = set()
 
-# Define safe ports (Ports that should NOT be flagged)
+# Defining safe ports that should NOT be flagged
 SAFE_PORTS = {22, 5000, 27017, 44371}
 
-# Initialize Nmap scanner
+# Initializing Nmap scanner
 try:
     nm = nmap.PortScanner()
 except Exception as e:
@@ -84,7 +84,7 @@ def detect_external_scans():
     detected_threats = []
     for ip, count in suspicious_ips.items():
         #  If an IP scans too many ports in a short time, flag it as an attack!
-        ATTACK_THRESHOLD = 15  # You can adjust this based on testing
+        ATTACK_THRESHOLD = 15  
         if count > ATTACK_THRESHOLD:
             recent_time_limit = datetime.utcnow() - timedelta(minutes=1)
             recent_threat = db.nmap_threats.find_one(
@@ -120,10 +120,10 @@ def detect_ddos():
     # Get current time
     current_time = datetime.utcnow()
 
-    # Check if the last scan was delayed (possible DDoS downtime)
+    # Check if the last scan was delayed indicating DDoS
     if LAST_SCAN_TIME:
         time_diff = (current_time - LAST_SCAN_TIME).total_seconds()
-        if time_diff > 60:  # If more than 60s delay, server was likely under attack
+        if time_diff > 60:  # If more than 60s delay, server was under attack
             print(f"[ALERT] Possible DDoS detected due to system unresponsiveness!")
 
             # Log it in MongoDB
@@ -138,7 +138,7 @@ def detect_ddos():
             db.nmap_threats.insert_one(threat)
             print(f"[INFO] DDoS attack logged due to system unresponsiveness.")
 
-    # Check SYN_RECV connections (active attack check)
+    # Check SYN_RECV connections which is a active attack check
     netstat_output = os.popen("sudo netstat -ntu | grep ':22' | grep SYN_RECV | wc -l").read().strip()
     
     try:
@@ -146,13 +146,13 @@ def detect_ddos():
     except ValueError:
         connection_count = 0
 
-    ATTACK_THRESHOLD = 50  # Adjust this based on testing
-    RECENT_TIME_LIMIT = datetime.utcnow() - timedelta(minutes=5)  # Check if an attack happened recently
+    ATTACK_THRESHOLD = 50 
+    RECENT_TIME_LIMIT = datetime.utcnow() - timedelta(minutes=5)  # Checking if an attack happened recently
 
     if connection_count > ATTACK_THRESHOLD:
         print(f"[ALERT] DDoS attack detected! ({connection_count} SYN requests to port 22)")
 
-        # Check if a DDoS attack was already logged in the last 5 minutes
+        # Checking if a DDoS attack was already logged in the last 5 minutes
         recent_attack = db.nmap_threats.find_one(
             {"service": "DDoS Attack", "timestamp": {"$gte": RECENT_TIME_LIMIT.isoformat()}}
         )
@@ -170,7 +170,7 @@ def detect_ddos():
             db.nmap_threats.insert_one(threat)
             print(f"[INFO] DDoS attack logged.")
 
-    # Update last scan time
+    # Updating last scan time
     LAST_SCAN_TIME = current_time
 
 def scan_network(target=None, arguments="-p- -T4"):

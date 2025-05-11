@@ -7,15 +7,13 @@ import ipaddress
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
-
-# Add project root to system path for module imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from database.mongo_db import db # MongoDB database connection
 
 # Defining base directory for saving model and encoders
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Load last 500 logs from MongoDB
+# Loading last 500 logs from MongoDB
 raw_logs = list(db.logs.find({"type": "INFO"}).sort("timestamp", -1).limit(500))
 
 data = []
@@ -61,7 +59,7 @@ if data:
     df['action_encoded'] = le_action.fit_transform(df['action'])
     # Selecting features for anomaly detection
     features = df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']]
-    # Training Isolation Forest model (unsupervised anomaly detection)
+    # Training Isolation Forest model using unsupervised anomaly detection
     model = IsolationForest(contamination=0.1, random_state=42)
     model.fit(features)
     # Saving model and encoders for future inference

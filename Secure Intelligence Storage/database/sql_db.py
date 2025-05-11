@@ -19,7 +19,7 @@ else:
     ENCRYPTION_KEY = Fernet.generate_key()
     with open(KEY_FILE, "wb") as key_file:
         key_file.write(ENCRYPTION_KEY)
-    os.chmod(KEY_FILE, 0o600)  # Restrict file access
+    os.chmod(KEY_FILE, 0o600)  # Restricting file access
 
 cipher_suite = Fernet(ENCRYPTION_KEY)
 
@@ -29,7 +29,7 @@ def get_db_connection():
     connection.row_factory = sqlite3.Row  
     return connection
 
-# Initialize database securely
+# Initializing database securely
 def initialize_database():
     connection = get_db_connection()
     with connection:
@@ -44,7 +44,7 @@ def initialize_database():
         ''')
     connection.close()
 
-# Insert a new user securely
+# Inserting a new user securely
 def insert_user(email, password_hash):
     connection = get_db_connection()
     with connection:
@@ -54,7 +54,7 @@ def insert_user(email, password_hash):
         )
     connection.close()
 
-# Fetch user securely
+# Fetching user securely
 def find_user_by_email(email):
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -66,7 +66,7 @@ def find_user_by_email(email):
     connection.close()
     return dict(row) if row else None 
 
-# Encrypt and store MFA secret
+# Encrypting and storing MFA secret
 def update_mfa_secret(email, mfa_secret):
     encrypted_secret = encrypt_secret(mfa_secret)
     connection = get_db_connection()
@@ -85,7 +85,7 @@ def encrypt_secret(secret):
 def decrypt_secret(encrypted_secret):
     return cipher_suite.decrypt(encrypted_secret).decode()
 
-# Delete user securely
+# Deleting user securely
 def delete_user_by_id(user_id):
     connection = get_db_connection()
     with connection:
