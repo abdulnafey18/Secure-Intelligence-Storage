@@ -3,7 +3,6 @@ import ipaddress
 # Whitelisted IPs
 WHITELISTED_IPS = {
     int(ipaddress.IPv4Address("127.0.0.1")),
-    int(ipaddress.IPv4Address("185.134.146.28")),
     int(ipaddress.IPv4Address("34.160.111.145"))
 }
 

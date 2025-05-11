@@ -107,16 +107,16 @@ def admin_routes(app):
 
                 if upload:
                     user, file = upload.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                    data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
                 elif download:
                     user, file = download.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                    data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
                 elif shared:
                     user, file, recipient = shared.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                    data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient, "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
                 elif download_shared:
                     user, file = download_shared.groups()
-                    data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                    data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
 
             if not data:
                 return jsonify([])
@@ -167,7 +167,6 @@ def admin_routes(app):
             hour = timestamp_obj.hour
             file_size = log.get("file_size", 0)
             ip_raw = log.get("ip", "0.0.0.0")
-
             try:
                 ip_encoded = int(ipaddress.IPv4Address(ip_raw))
             except:
@@ -180,25 +179,23 @@ def admin_routes(app):
 
             if upload:
                 user, file = upload.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "Upload", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
             elif download:
                 user, file = download.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "Download", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
             elif shared:
                 user, file, recipient = shared.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient, "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "Share", "file_name": file, "recipient": recipient, "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
             elif download_shared:
                 user, file = download_shared.groups()
-                data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_encoded": ip_encoded})
+                data.append({"timestamp": timestamp, "user": user, "action": "DownloadShared", "file_name": file, "recipient": "", "hour": hour, "file_size": file_size, "ip_raw": ip_raw, "ip_encoded": ip_encoded})
 
         if not data:
             return "No anomalies found."
 
         df = pd.DataFrame(data)
-
         df['user'] = df['user'].apply(lambda x: x if x in le_user.classes_ else 'unknown')
         df['action'] = df['action'].apply(lambda x: x if x in le_action.classes_ else 'unknown')
-
         if 'unknown' not in le_user.classes_:
             le_user.classes_ = np.append(le_user.classes_, 'unknown')
         if 'unknown' not in le_action.classes_:
@@ -206,15 +203,12 @@ def admin_routes(app):
 
         df['user_encoded'] = le_user.transform(df['user'])
         df['action_encoded'] = le_action.transform(df['action'])
-
         df['anomaly'] = model.predict(df[['user_encoded', 'action_encoded', 'hour', 'file_size', 'ip_encoded']])
         anomalies = df[df['anomaly'] == -1]
-
         anomalies['suspicious_score'] = anomalies.apply(calculate_suspicious_score, axis=1)
 
         pdf = FPDF()
         pdf.add_page()
-
         pdf.set_font("Arial", 'B', 16)
         pdf.cell(0, 12, "Secure Intelligence Storage", ln=True, align='C')
         pdf.set_font("Arial", '', 12)
@@ -222,27 +216,43 @@ def admin_routes(app):
         pdf.cell(0, 10, f"Generated On: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align='C')
         pdf.ln(6)
 
-        # Table headers
-        headers = ["Timestamp", "User", "Action", "File", "Score", "IP", "Size", "Reasons"]
-        col_widths = [32, 35, 22, 50, 10, 22, 18, 70]
+        headers = ["Timestamp", "User", "Action", "File", "Score", "IP", "Size"]
+        col_widths = [32, 35, 30, 40, 10, 30, 15]  
+        row_height = 6
+
         pdf.set_fill_color(200, 220, 255)
         pdf.set_font("Arial", 'B', 9)
+
+        # Render headers
         for i, header in enumerate(headers):
-            pdf.cell(col_widths[i], 8, header, 1, 0, 'C', True)
+            pdf.cell(col_widths[i], row_height + 2, header, 1, 0, 'C', True)
         pdf.ln()
 
-        # Rows
         pdf.set_font("Arial", '', 8)
         for _, row in anomalies.iterrows():
-            pdf.cell(col_widths[0], 8, row['timestamp'], 1)
-            pdf.cell(col_widths[1], 8, row['user'][:18], 1)
-            pdf.cell(col_widths[2], 8, row['action'], 1)
-            pdf.cell(col_widths[3], 8, row['file_name'][:30], 1)
-            pdf.cell(col_widths[4], 8, str(row['suspicious_score']), 1)
-            pdf.cell(col_widths[5], 8, str(row['ip_encoded']), 1)
-            pdf.cell(col_widths[6], 8, str(row['file_size']), 1)
-            pdf.cell(col_widths[7], 8, ", ".join(row.get('suspicion_reasons', []))[:60], 1)
-            pdf.ln()
+            row_data = [
+                row['timestamp'],
+                row['user'],
+                row['action'],
+                row['file_name'],
+                str(row['suspicious_score']),
+                row['ip_raw'],
+                str(row['file_size']),
+            ]
+
+            x_start = pdf.get_x()
+            y_start = pdf.get_y()
+            max_y = y_start
+
+            # Track height of each cell rendered
+            heights = []
+            for i, cell in enumerate(row_data):
+                pdf.set_xy(x_start + sum(col_widths[:i]), y_start)
+                pdf.multi_cell(col_widths[i], row_height, str(cell), 1)
+                heights.append(pdf.get_y() - y_start)
+
+            # Move to next line at max height
+            pdf.set_y(y_start + max(heights))
 
         pdf_file = os.path.join(base_dir, "anomaly_report.pdf")
         pdf.output(pdf_file)
