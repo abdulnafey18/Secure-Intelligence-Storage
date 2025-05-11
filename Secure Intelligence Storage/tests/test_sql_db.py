@@ -9,14 +9,11 @@ class TestSQLDatabase(unittest.TestCase):
     def setUp(self):
         self.test_db_path = "tests/test_auth.db"
 
-        # Ensure test directory exists
         os.makedirs("tests", exist_ok=True)
 
-        # Initialize test DB
         sql_db.initialize_database()
 
     def tearDown(self):
-        # Clean up test DB and key file
         if os.path.exists(self.test_db_path):
             os.remove(self.test_db_path)
         if os.path.exists(os.environ["KEY_FILE_PATH"]):

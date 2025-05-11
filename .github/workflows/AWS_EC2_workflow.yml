@@ -22,11 +22,11 @@ jobs:
 
       - name: Test SSH Connection
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@13.49.175.9 "echo Connected Successfully!"
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@13.53.186.27 "echo Connected Successfully!"
 
       - name: Deploy latest code to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@13.49.175.9 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@13.53.186.27 << 'EOF'
             cd /home/ec2-user/Secure-Intelligence-Storage
             git pull origin main
           EOF
